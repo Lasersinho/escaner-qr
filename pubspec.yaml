@@ -1,0 +1,45 @@
+name: office_flow
+description: "OfficeFlow Premium Attendance - QR-based departure scanner"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.3
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State Management & DI
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+
+  # Navigation
+  go_router: ^14.8.1
+
+  # UI & Aesthetics
+  google_fonts: ^6.2.1
+  flutter_svg: ^2.0.17
+
+  # Functional Features
+  mobile_scanner: ^6.0.2
+  geolocator: ^13.0.2
+  dio: ^5.7.0
+
+  # Security & Local Storage
+  flutter_secure_storage: ^9.2.4
+
+  # Utilities
+  intl: ^0.20.2
+  json_annotation: ^4.9.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  build_runner: ^2.4.14
+  riverpod_generator: ^2.6.3
+  json_serializable: ^6.9.4
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
