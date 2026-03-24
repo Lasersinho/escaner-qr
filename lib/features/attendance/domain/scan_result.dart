@@ -10,6 +10,8 @@ class ScanResult {
     required this.qrData,
     required this.employeeId,
     required this.deviceInfo,
+    this.backPhotoPath,
+    this.frontPhotoPath,
   });
 
   final DateTime timestamp;
@@ -18,6 +20,8 @@ class ScanResult {
   final String qrData;
   final String employeeId;
   final String deviceInfo;
+  final String? backPhotoPath;
+  final String? frontPhotoPath;
 
   factory ScanResult.fromJson(Map<String, dynamic> json) => ScanResult(
         timestamp: DateTime.parse(json['timestamp'] as String),
@@ -26,6 +30,8 @@ class ScanResult {
         qrData: json['qrData'] as String,
         employeeId: json['employeeId'] as String,
         deviceInfo: json['deviceInfo'] as String,
+        backPhotoPath: json['backPhotoPath'] as String?,
+        frontPhotoPath: json['frontPhotoPath'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
@@ -35,5 +41,7 @@ class ScanResult {
         'qrData': qrData,
         'employeeId': employeeId,
         'deviceInfo': deviceInfo,
+        if (backPhotoPath != null) 'backPhotoPath': backPhotoPath,
+        if (frontPhotoPath != null) 'frontPhotoPath': frontPhotoPath,
       };
 }

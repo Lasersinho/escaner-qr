@@ -15,9 +15,26 @@ class AttendanceRepository {
   /// Returns `true` on success, throws on failure.
   Future<bool> markDeparture(ScanResult result) async {
     try {
+      // Create FormData for multipart upload
+      final formData = FormData.fromMap(result.toJson());
+
+      // Append files if paths exist
+      if (result.backPhotoPath != null) {
+        formData.files.add(MapEntry(
+          'backPhoto',
+          await MultipartFile.fromFile(result.backPhotoPath!, filename: 'backPhoto.jpg'),
+        ));
+      }
+      if (result.frontPhotoPath != null) {
+        formData.files.add(MapEntry(
+          'frontPhoto',
+          await MultipartFile.fromFile(result.frontPhotoPath!, filename: 'frontPhoto.jpg'),
+        ));
+      }
+
       final response = await _dio.post(
         '/departure',
-        data: result.toJson(),
+        data: formData,
       );
       return response.statusCode == 200 || response.statusCode == 201;
     } on DioException catch (e) {

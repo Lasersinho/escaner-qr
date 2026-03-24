@@ -19,27 +19,49 @@ class ScannerScreen extends ConsumerStatefulWidget {
   ConsumerState<ScannerScreen> createState() => _ScannerScreenState();
 }
 
-class _ScannerScreenState extends ConsumerState<ScannerScreen> {
+class _ScannerScreenState extends ConsumerState<ScannerScreen> with SingleTickerProviderStateMixin {
   final MobileScannerController _cameraController = MobileScannerController(
     detectionSpeed: DetectionSpeed.normal,
     facing: CameraFacing.back,
   );
 
+  late final AnimationController _flashController;
+  late final Animation<double> _flashAnimation;
+
   bool _hasScanned = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _flashController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+    _flashAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _flashController, curve: Curves.easeInOut),
+    );
+  }
 
   @override
   void dispose() {
     _cameraController.dispose();
+    _flashController.dispose();
     super.dispose();
   }
 
-  void _onDetect(BarcodeCapture capture) {
+  void _onDetect(BarcodeCapture capture) async {
     if (_hasScanned) return;
     final barcode = capture.barcodes.firstOrNull;
     if (barcode == null || barcode.rawValue == null) return;
 
     setState(() => _hasScanned = true);
-    _cameraController.stop();
+    
+    // Stop scanner to yield camera resources
+    await _cameraController.stop();
+
+    // Trigger flash effect
+    await _flashController.forward();
+    await _flashController.reverse();
 
     ref.read(attendanceActionProvider.notifier).processScan(barcode.rawValue!);
   }
@@ -93,9 +115,21 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
             child: _buildBottomBar(context),
           ),
 
+          // ── Flash Effect ──
+          AnimatedBuilder(
+            animation: _flashAnimation,
+            builder: (context, child) {
+              return IgnorePointer(
+                child: Container(
+                  color: Colors.white.withValues(alpha: _flashAnimation.value * 0.8),
+                ),
+              );
+            },
+          ),
+
           // ── Processing overlay ──
-          if (actionState.status == AttendanceActionStatus.processing)
-            _buildProcessingOverlay(),
+          if (actionState.status == AttendanceActionStatus.securing)
+            _buildProcessingOverlay(actionState.message ?? 'Procesando...'),
         ],
       ),
     );
@@ -120,18 +154,39 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
               bottom: BorderSide(color: AppColors.glassBorder, width: 1),
             ),
           ),
-          child: Row(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.qr_code_scanner_rounded,
-                  color: AppColors.primaryAccent, size: 28),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Escanea QR de Salida',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontSize: 18,
-                      ),
-                ),
+              Row(
+                children: [
+                  const Icon(Icons.qr_code_scanner_rounded,
+                      color: AppColors.primaryAccent, size: 28),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Escanea QR de Salida',
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                            fontSize: 18,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.security_rounded, color: AppColors.success, size: 14),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Doble Cámara de Seguridad Activa',
+                    style: TextStyle(
+                      color: AppColors.success,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -196,7 +251,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
 
   // ── Processing overlay ──────────────────────────────────────────────────
 
-  Widget _buildProcessingOverlay() {
+  Widget _buildProcessingOverlay(String message) {
     return Positioned.fill(
       child: ClipRect(
         child: BackdropFilter(
@@ -221,7 +276,8 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                     ),
                     const SizedBox(height: 20),
                     Text(
-                      'Registrando...',
+                      message,
+                      textAlign: TextAlign.center,
                       style: TextStyle(
                         color: AppColors.textPrimary,
                         fontSize: 15,
