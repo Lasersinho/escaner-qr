@@ -2,13 +2,13 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../../core/theme/app_colors.dart';
 
 import '../../../shared/widgets/glass_card.dart';
 import '../../../shared/widgets/neo_button.dart';
-import '../../auth/presentation/auth_provider.dart';
 import 'attendance_provider.dart';
 
 /// Main scanner screen shown after authentication.
@@ -224,11 +224,15 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with SingleTicker
               ),
               IconButton(
                 onPressed: () {
-                  ref.read(authProvider.notifier).logout();
+                  if (context.canPop()) {
+                    context.pop();
+                  } else {
+                    context.go('/home');
+                  }
                 },
-                icon: const Icon(Icons.logout_rounded,
-                    color: AppColors.textSecondary),
-                tooltip: 'Cerrar sesión',
+                icon: const Icon(Icons.arrow_back_rounded,
+                    color: AppColors.textPrimary),
+                tooltip: 'Volver',
               ),
             ],
           ),

@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/auth_provider.dart';
 import 'features/auth/presentation/login_screen.dart';
+import 'features/home/presentation/home_screen.dart';
+import 'features/home/presentation/profile_screen.dart';
 import 'features/attendance/presentation/scanner_screen.dart';
 
 /// Root application widget containing theme and router configuration.
@@ -37,7 +39,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           authState.status == AuthStatus.authenticated;
       final isOnLogin = state.matchedLocation == '/login';
 
-      if (isAuthenticated && isOnLogin) return '/scanner';
+      if (isAuthenticated && isOnLogin) return '/home';
       if (!isAuthenticated && !isOnLogin) return '/login';
       return null;
     },
@@ -45,6 +47,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/home',
+        builder: (context, state) => const HomeScreen(),
+      ),
+      GoRoute(
+        path: '/profile',
+        builder: (context, state) => const ProfileScreen(),
       ),
       GoRoute(
         path: '/scanner',
@@ -62,3 +72,4 @@ class _AuthRefreshListenable extends ChangeNotifier {
     });
   }
 }
+
