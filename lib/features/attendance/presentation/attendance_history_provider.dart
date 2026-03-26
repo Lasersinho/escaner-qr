@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../domain/attendance_record.dart';
@@ -26,21 +27,22 @@ extension AttendanceTimeFilterLabel on AttendanceTimeFilter {
 class AttendanceHistoryState {
   const AttendanceHistoryState({
     this.filter = AttendanceTimeFilter.week,
-    this.customDate,
+    this.customDateRange,
     this.allRecords = const [],
   });
 
   final AttendanceTimeFilter filter;
-  final DateTime? customDate;
+  final DateTimeRange? customDateRange;
   final List<AttendanceRecord> allRecords;
 
   /// Returns records filtered by the current [filter], sorted descending.
   List<AttendanceRecord> get filteredRecords {
-    if (filter == AttendanceTimeFilter.custom && customDate != null) {
-      final targetDate = DateTime(customDate!.year, customDate!.month, customDate!.day);
+    if (filter == AttendanceTimeFilter.custom && customDateRange != null) {
+      final start = DateTime(customDateRange!.start.year, customDateRange!.start.month, customDateRange!.start.day);
+      final end = DateTime(customDateRange!.end.year, customDateRange!.end.month, customDateRange!.end.day, 23, 59, 59);
+
       return allRecords.where((r) {
-        final rDate = DateTime(r.dateTime.year, r.dateTime.month, r.dateTime.day);
-        return rDate.isAtSameMomentAs(targetDate);
+        return r.dateTime.isAfter(start.subtract(const Duration(seconds: 1))) && r.dateTime.isBefore(end.add(const Duration(seconds: 1)));
       }).toList()..sort((a, b) => b.dateTime.compareTo(a.dateTime));
     }
 
@@ -76,12 +78,12 @@ class AttendanceHistoryState {
 
   AttendanceHistoryState copyWith({
     AttendanceTimeFilter? filter,
-    DateTime? customDate,
+    DateTimeRange? customDateRange,
     List<AttendanceRecord>? allRecords,
   }) =>
       AttendanceHistoryState(
         filter: filter ?? this.filter,
-        customDate: customDate ?? this.customDate,
+        customDateRange: customDateRange ?? this.customDateRange,
         allRecords: allRecords ?? this.allRecords,
       );
 }
@@ -133,8 +135,8 @@ class AttendanceHistoryNotifier
     state = state.copyWith(filter: filter);
   }
 
-  void setCustomDate(DateTime date) {
-    state = state.copyWith(filter: AttendanceTimeFilter.custom, customDate: date);
+  void setCustomDateRange(DateTimeRange range) {
+    state = state.copyWith(filter: AttendanceTimeFilter.custom, customDateRange: range);
   }
 
   /// Call after a successful QR scan to add a new entry/exit record.

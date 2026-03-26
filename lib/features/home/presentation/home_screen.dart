@@ -199,9 +199,8 @@ class HomeScreen extends ConsumerWidget {
             ),
             child: IconButton(
               onPressed: () async {
-                final date = await showDatePicker(
+                final range = await showDateRangePicker(
                   context: context,
-                  initialDate: DateTime.now(),
                   firstDate: DateTime(2020),
                   lastDate: DateTime.now(),
                   builder: (context, child) {
@@ -218,8 +217,8 @@ class HomeScreen extends ConsumerWidget {
                     );
                   },
                 );
-                if (date != null) {
-                  ref.read(attendanceHistoryProvider.notifier).setCustomDate(date);
+                if (range != null) {
+                  ref.read(attendanceHistoryProvider.notifier).setCustomDateRange(range);
                 }
               },
               icon: Icon(
