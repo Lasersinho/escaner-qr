@@ -94,41 +94,22 @@ class AttendanceActionNotifier extends StateNotifier<AttendanceActionState> {
     );
 
     try {
-      // 2. Capture dual photos
-      final images = await _cameraCaptureService.captureDualPhoto();
-
-      // Change message for front camera
+      // --- MOCK FOR UI TESTING ---
+      // Simulate typical delay
+      await Future.delayed(const Duration(seconds: 1));
       state = state.copyWith(message: 'Verificando identidad...');
-
-      // 3. Location
-      final position = await _locationService.getCurrentPosition();
-
-      // Ensure message reflects sending state so UI doesn't hang
+      await Future.delayed(const Duration(seconds: 1));
       state = state.copyWith(message: 'Enviando...');
-
-      // 4. Timestamp & Build Model
+      await Future.delayed(const Duration(seconds: 1));
+      
       final now = DateTime.now();
-      final result = ScanResult(
-        timestamp: now,
-        latitude: position.latitude,
-        longitude: position.longitude,
-        qrData: qrData,
-        employeeId: 'usr_001',
-        deviceInfo: '${Platform.operatingSystem} ${Platform.operatingSystemVersion}',
-        backPhotoPath: images.backPhotoPath,
-        frontPhotoPath: images.frontPhotoPath,
-      );
-
-      // 5. Call API
-      await _repository.markDeparture(result);
-
+      
       // 6. Format time and succeed
       final hh = now.hour.toString().padLeft(2, '0');
       final mm = now.minute.toString().padLeft(2, '0');
 
       state = state.copyWith(
         status: AttendanceActionStatus.success,
-        scanResult: result,
         formattedTime: '$hh:$mm',
       );
     } catch (e) {
