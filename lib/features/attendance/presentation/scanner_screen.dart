@@ -396,13 +396,15 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with TickerProvid
         curve: Curves.easeOutBack,
         builder: (context, scale, child) => Transform.scale(
           scale: scale,
-          child: Center(
-            child: GlassCard(
-              width: 320,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
+          child: Material(
+            type: MaterialType.transparency,
+            child: Center(
+              child: GlassCard(
+                width: 320,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                    Container(
                      padding: const EdgeInsets.all(20),
                      decoration: BoxDecoration(
@@ -462,9 +464,10 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with TickerProvid
               ),
             ),
           ),
-        ),
-      ),
-    );
+          ), // Material
+        ), // Transform.scale
+      ), // TweenAnimationBuilder
+    ); // showDialog
   }
 
   void _showErrorDialog(String message) {
@@ -478,13 +481,15 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with TickerProvid
         curve: Curves.easeOutBack,
         builder: (context, scale, child) => Transform.scale(
           scale: scale,
-          child: Center(
-            child: GlassCard(
-              width: 320,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
+          child: Material(
+            type: MaterialType.transparency,
+            child: Center(
+              child: GlassCard(
+                width: 320,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
@@ -546,9 +551,10 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with TickerProvid
               ),
             ),
           ),
-        ),
-      ),
-    );
+          ), // Material
+        ), // Transform.scale
+      ), // TweenAnimationBuilder
+    ); // showDialog
   }
 }
 
