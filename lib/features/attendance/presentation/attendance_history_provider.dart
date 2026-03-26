@@ -4,7 +4,7 @@ import '../domain/attendance_record.dart';
 
 // ── Time Filter ─────────────────────────────────────────────────────────────
 
-enum AttendanceTimeFilter { today, week, month }
+enum AttendanceTimeFilter { today, week, month, custom }
 
 extension AttendanceTimeFilterLabel on AttendanceTimeFilter {
   String get label {
@@ -15,6 +15,8 @@ extension AttendanceTimeFilterLabel on AttendanceTimeFilter {
         return 'Semana';
       case AttendanceTimeFilter.month:
         return 'Mes';
+      case AttendanceTimeFilter.custom:
+        return 'Fecha';
     }
   }
 }
@@ -24,14 +26,24 @@ extension AttendanceTimeFilterLabel on AttendanceTimeFilter {
 class AttendanceHistoryState {
   const AttendanceHistoryState({
     this.filter = AttendanceTimeFilter.week,
+    this.customDate,
     this.allRecords = const [],
   });
 
   final AttendanceTimeFilter filter;
+  final DateTime? customDate;
   final List<AttendanceRecord> allRecords;
 
   /// Returns records filtered by the current [filter], sorted descending.
   List<AttendanceRecord> get filteredRecords {
+    if (filter == AttendanceTimeFilter.custom && customDate != null) {
+      final targetDate = DateTime(customDate!.year, customDate!.month, customDate!.day);
+      return allRecords.where((r) {
+        final rDate = DateTime(r.dateTime.year, r.dateTime.month, r.dateTime.day);
+        return rDate.isAtSameMomentAs(targetDate);
+      }).toList()..sort((a, b) => b.dateTime.compareTo(a.dateTime));
+    }
+
     final now = DateTime.now();
     final cutoff = switch (filter) {
       AttendanceTimeFilter.today => DateTime(now.year, now.month, now.day),
@@ -39,6 +51,8 @@ class AttendanceHistoryState {
         now.subtract(const Duration(days: 6)),
       AttendanceTimeFilter.month =>
         now.subtract(const Duration(days: 29)),
+      AttendanceTimeFilter.custom =>
+        now.subtract(const Duration(days: 6)), // Fallback
     };
     return allRecords
         .where((r) => r.dateTime.isAfter(cutoff))
@@ -62,10 +76,12 @@ class AttendanceHistoryState {
 
   AttendanceHistoryState copyWith({
     AttendanceTimeFilter? filter,
+    DateTime? customDate,
     List<AttendanceRecord>? allRecords,
   }) =>
       AttendanceHistoryState(
         filter: filter ?? this.filter,
+        customDate: customDate ?? this.customDate,
         allRecords: allRecords ?? this.allRecords,
       );
 }
@@ -115,6 +131,10 @@ class AttendanceHistoryNotifier
 
   void setFilter(AttendanceTimeFilter filter) {
     state = state.copyWith(filter: filter);
+  }
+
+  void setCustomDate(DateTime date) {
+    state = state.copyWith(filter: AttendanceTimeFilter.custom, customDate: date);
   }
 
   /// Call after a successful QR scan to add a new entry/exit record.

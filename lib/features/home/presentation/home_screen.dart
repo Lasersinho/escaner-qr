@@ -71,17 +71,11 @@ class HomeScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'OfficeFlow',
+                  'Pulse',
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                        fontSize: 26,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
                         letterSpacing: -0.5,
-                      ),
-                ),
-                Text(
-                  'Asistencia Premium',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.primaryAccent,
-                        fontWeight: FontWeight.w500,
                       ),
                 ),
               ],
@@ -138,56 +132,104 @@ class HomeScreen extends ConsumerWidget {
       padding:
           const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
       child: Row(
-        children: AttendanceTimeFilter.values.map((filter) {
-          final isSelected = filter == currentFilter;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: GestureDetector(
-              onTap: () => ref
-                  .read(attendanceHistoryProvider.notifier)
-                  .setFilter(filter),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? AppColors.primaryAccent
-                      : AppColors.inputFill,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isSelected
-                        ? AppColors.primaryAccent
-                        : AppColors.inputBorder,
-                    width: 1,
-                  ),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: AppColors.primaryAccent
-                                .withValues(alpha: 0.25),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
-                          )
-                        ]
-                      : null,
-                ),
-                child: Text(
-                  filter.label,
-                  style: TextStyle(
-                    color: isSelected
-                        ? Colors.white
-                        : AppColors.textSecondary,
-                    fontSize: 13,
-                    fontWeight: isSelected
-                        ? FontWeight.w600
-                        : FontWeight.w400,
-                  ),
-                ),
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: AttendanceTimeFilter.values.where((f) => f != AttendanceTimeFilter.custom).map((filter) {
+                  final isSelected = filter == currentFilter;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: GestureDetector(
+                      onTap: () => ref
+                          .read(attendanceHistoryProvider.notifier)
+                          .setFilter(filter),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? AppColors.primaryAccent
+                              : AppColors.inputFill,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: isSelected
+                                ? AppColors.primaryAccent
+                                : AppColors.inputBorder,
+                            width: 1,
+                          ),
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: AppColors.primaryAccent
+                                        .withValues(alpha: 0.25),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 3),
+                                  )
+                                ]
+                              : null,
+                        ),
+                        child: Text(
+                          filter.label,
+                          style: TextStyle(
+                            color: isSelected
+                                ? Colors.white
+                                : AppColors.textSecondary,
+                            fontSize: 13,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.w400,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
               ),
             ),
-          );
-        }).toList(),
+          ),
+          
+          // Calendar filter button
+          Container(
+            decoration: BoxDecoration(
+              color: currentFilter == AttendanceTimeFilter.custom ? AppColors.primaryAccent.withValues(alpha: 0.1) : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: IconButton(
+              onPressed: () async {
+                final date = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now(),
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime.now(),
+                  builder: (context, child) {
+                    return Theme(
+                      data: Theme.of(context).copyWith(
+                        colorScheme: const ColorScheme.light(
+                          primary: AppColors.primaryAccent,
+                          onPrimary: Colors.white,
+                          surface: AppColors.backgroundEnd,
+                          onSurface: AppColors.textPrimary,
+                        ),
+                      ),
+                      child: child!,
+                    );
+                  },
+                );
+                if (date != null) {
+                  ref.read(attendanceHistoryProvider.notifier).setCustomDate(date);
+                }
+              },
+              icon: Icon(
+                Icons.calendar_month_rounded,
+                color: currentFilter == AttendanceTimeFilter.custom ? AppColors.primaryAccent : AppColors.textSecondary,
+              ),
+              tooltip: 'Filtrar por fecha',
+            ),
+          ),
+        ],
       ),
     );
   }
