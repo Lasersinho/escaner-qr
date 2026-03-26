@@ -8,6 +8,7 @@ import 'features/auth/presentation/login_screen.dart';
 import 'features/home/presentation/home_screen.dart';
 import 'features/home/presentation/profile_screen.dart';
 import 'features/attendance/presentation/scanner_screen.dart';
+import 'core/theme/app_page_transitions.dart';
 
 /// Root application widget containing theme and router configuration.
 class OfficeFlowApp extends ConsumerWidget {
@@ -46,19 +47,31 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: '/login',
-        builder: (context, state) => const LoginScreen(),
+        pageBuilder: (context, state) => AppPageTransitions.fadeScale(
+          key: state.pageKey,
+          child: const LoginScreen(),
+        ),
       ),
       GoRoute(
         path: '/home',
-        builder: (context, state) => const HomeScreen(),
+        pageBuilder: (context, state) => AppPageTransitions.fadeScale(
+          key: state.pageKey,
+          child: const HomeScreen(),
+        ),
       ),
       GoRoute(
         path: '/profile',
-        builder: (context, state) => const ProfileScreen(),
+        pageBuilder: (context, state) => AppPageTransitions.slideUp(
+          key: state.pageKey,
+          child: const ProfileScreen(),
+        ),
       ),
       GoRoute(
         path: '/scanner',
-        builder: (context, state) => const ScannerScreen(),
+        pageBuilder: (context, state) => AppPageTransitions.fadeScale(
+          key: state.pageKey,
+          child: const ScannerScreen(),
+        ),
       ),
     ],
   );
