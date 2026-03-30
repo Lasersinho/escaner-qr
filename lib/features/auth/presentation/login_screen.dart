@@ -6,6 +6,7 @@ import '../../../shared/widgets/glass_card.dart';
 import '../../../shared/widgets/neo_button.dart';
 import '../../../shared/widgets/premium_input.dart';
 import 'auth_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 /// Full-screen login screen with a Glass-Neo-Minimalism aesthetic.
 class LoginScreen extends ConsumerStatefulWidget {
@@ -21,6 +22,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   final _passwordController = TextEditingController();
   late final AnimationController _fadeCtrl;
   late final Animation<double> _fadeAnim;
+  bool _isRequestingPermissions = false;
 
   @override
   void initState() {
@@ -41,21 +43,48 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     super.dispose();
   }
 
-  void _handleLogin() {
+  Future<void> _handleLogin() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     if (email.isEmpty || password.isEmpty) return;
 
-    ref.read(authProvider.notifier).login(
-          email: email,
-          password: password,
+    setState(() => _isRequestingPermissions = true);
+
+    try {
+      // Regla de Negocio: Se deben conceder todos los accesos nativos para entrar
+      final Map<Permission, PermissionStatus> statuses = await [
+        Permission.location,
+        Permission.camera,
+      ].request();
+
+      final bool locGranted = statuses[Permission.location]?.isGranted ?? false;
+      final bool camGranted = statuses[Permission.camera]?.isGranted ?? false;
+
+      if (!locGranted || !camGranted) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Operación Denegada: Requerimos permisos de GPS y Cámara obligatoriamente para tu sesión.'),
+            backgroundColor: AppColors.error,
+          ),
         );
+        return; // Aborta inicio de sesión
+      }
+
+      if (!mounted) return;
+      ref.read(authProvider.notifier).login(
+            email: email,
+            password: password,
+          );
+    } finally {
+      if (mounted) setState(() => _isRequestingPermissions = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
-    final isLoading = authState.status == AuthStatus.authenticating;
+    final isLoading = authState.status == AuthStatus.authenticating || _isRequestingPermissions;
 
     return Scaffold(
       body: Container(
