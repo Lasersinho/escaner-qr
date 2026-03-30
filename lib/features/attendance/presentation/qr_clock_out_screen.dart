@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:dio/dio.dart';
 import '../data/location_security_service.dart';
 import '../data/device_identity_service.dart';
 
@@ -110,13 +111,53 @@ class _QRClockOutScreenState extends State<QRClockOutScreen> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Sincronizando con dispositivo ID...\nEnviando: $qrCode'),
-            backgroundColor: Colors.green.shade700,
+            content: Text('Sincronizando ID...\nEnviando: $qrCode'),
+            backgroundColor: Colors.blueGrey.shade800,
           ),
         );
 
-        // TODO: Enviar payload a tu Backend (Ej. dio.post('/api/attendance', data: payload))
+        // [IMPLEMENTACIÓN SOLICITADA] Envío nativo de JSON usando Dio
+        final dio = Dio(
+          BaseOptions(
+            baseUrl: 'https://api.frioteam.com/v1', // URL de tu backend
+            connectTimeout: const Duration(seconds: 15),
+            headers: {
+              'Content-Type': 'application/json', // Firma esencial del JSON
+              'Accept': 'application/json',
+              // 'Authorization': 'Bearer $token_del_usuario_logueado', 
+            },
+          ),
+        );
 
+        // Dio codificará automáticamente el "payload" a un String JSON
+        final response = await dio.post(
+          '/attendance/clock-out',
+          data: payload, 
+        );
+
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+               content: Text('✅ Salida registrada exitosamente en nuestros servidores.'),
+               backgroundColor: Colors.green,
+            ),
+          );
+          // Redirigir o volver al menú
+          Navigator.pop(context, true);
+        } else {
+           throw Exception('Respuesta inesperada del servidor: ${response.statusCode}');
+        }
+
+      } on DioException catch (dioError) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Fallo de red: ${dioError.message}'),
+            backgroundColor: Colors.orange.shade900,
+          ),
+        );
+        _scannerController.start(); // Reiniciar cámara para reintentar
       } on DeviceIdentityException catch (e) {
         // Quiebre del flujo: Si no hay Binding, rechazar totalmente el intento
         if (!mounted) return;

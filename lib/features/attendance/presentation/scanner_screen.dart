@@ -103,6 +103,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with TickerProvid
       body: Stack(
         children: [
           // ── Camera feed ──
+          /*
           MobileScanner(
             controller: _cameraController,
             onDetect: _onDetect,
@@ -110,6 +111,28 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> with TickerProvid
 
           // ── Overlay ──
           _buildOverlay(size, scanAreaSize),
+          */
+
+          // ── Botón de Simulación de Marcación ──
+          Center(
+            child: SizedBox(
+              width: 250,
+              child: NeoButton(
+                label: 'Simular Marcación',
+                onPressed: () {
+                  if (_hasScanned) return;
+                  setState(() => _hasScanned = true);
+                  
+                  // Trigger flash effect
+                  _flashController.forward().then((_) {
+                    _flashController.reverse();
+                  });
+
+                  ref.read(attendanceActionProvider.notifier).processScan('test_codigo_qr');
+                },
+              ),
+            ),
+          ),
 
           // ── Top banner ──
           Positioned(
