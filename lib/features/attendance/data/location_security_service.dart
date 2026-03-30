@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:geolocator/geolocator.dart';
 
 class LocationValidationResult {
@@ -28,9 +29,12 @@ class LocationSecurityService {
   /// y detecta el uso de aplicaciones de simulación de ubicación (Fake GPS).
   Future<LocationValidationResult> validateCurrentLocation() async {
     try {
-      // 1. Obtener coordenadas actuales con la mayor precisión posible del hardware
+      // 1. Obtener coordenadas actuales con precisión de hardware
       final Position position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.best),
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.best,
+          timeLimit: Duration(seconds: 10), // Blindaje: Timeout para lugares cerrados
+        ),
       );
 
       // 2. Calcular la distancia métrica en línea recta
@@ -47,8 +51,13 @@ class LocationSecurityService {
         isMocked: position.isMocked, // Propiedad vital de Anti-Spoofing en Geolocator
       );
     } catch (e) {
+      if (e is TimeoutException) {
+        throw LocationSecurityException(
+          'Tiempo de espera agotado. Sal del sótano o acércate a una ventana para conectar con los satélites GPS.',
+        );
+      }
       throw LocationSecurityException(
-        'Error al obtener las coordenadas. Verifica que el sensor GPS de tu dispositivo esté activo.',
+        'Error al obtener las coordenadas. Verifica que el sensor GPS de tu dispositivo esté activo y con señal.',
       );
     }
   }
