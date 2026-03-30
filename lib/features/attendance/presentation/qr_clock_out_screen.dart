@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../data/location_security_service.dart';
+import '../data/device_identity_service.dart';
 
 // Diferenciación clara de los estados permitidos por la pantalla
 enum ScannerValidationState {
@@ -83,26 +84,52 @@ class _QRClockOutScreenState extends State<QRClockOutScreen> {
     }
   }
 
-  /// Evento que se dispara en cuanto la API detecta un QR válido.
-  void _onQRDetected(BarcodeCapture capture) {
+  /// Evento callback que extrae la información del QR leído
+  Future<void> _onQRDetected(BarcodeCapture capture) async {
     final List<Barcode> barcodes = capture.barcodes;
     if (barcodes.isNotEmpty && barcodes.first.rawValue != null) {
       final String qrCode = barcodes.first.rawValue!;
       
-      // Detenemos la cámara para no spamear envíos al detectar repetidamente en 1 segundo
+      // Detenemos la cámara para prevenir callbacks repetitivos inmediatos
       _scannerController.stop();
 
-      // Log/Acción en consola solicitada
-      debugPrint('🛡️ [SEGURIDAD APROBADA] Código de Salida: $qrCode');
+      try {
+        // [NUEVO] Device Binding Strategy: Extraer el Hardware ID con Zero Trust
+        // Instancia el Singleton en O(1) e invoca getDeviceIdentifier
+        final String deviceId = await DeviceIdentityService().getDeviceIdentifier();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Salida Registrada Correctamente: $qrCode'),
-          backgroundColor: Colors.green.shade700,
-        ),
-      );
-      
-      // Regresión opcional tras éxito: Navigator.pop(context, qrCode);
+        // Empaquetado final para la API backend
+        final payload = {
+          'qr_code': qrCode,
+          'device_id': deviceId,
+          // 'timestamp': DateTime.now().toIso8601String(),
+        };
+
+        debugPrint('🛡️ PAYLOAD SEGURO PREPARADO: $payload');
+
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Sincronizando con dispositivo ID...\nEnviando: $qrCode'),
+            backgroundColor: Colors.green.shade700,
+          ),
+        );
+
+        // TODO: Enviar payload a tu Backend (Ej. dio.post('/api/attendance', data: payload))
+
+      } on DeviceIdentityException catch (e) {
+        // Quiebre del flujo: Si no hay Binding, rechazar totalmente el intento
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Violación de Dispositivo: ${e.message}'),
+            backgroundColor: Colors.red.shade900,
+          ),
+        );
+        
+        // Reanudamos cámara para que intente de nuevo en caso de fallo intermitente
+        _scannerController.start();
+      }
     }
   }
 
