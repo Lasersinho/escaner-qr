@@ -43,17 +43,14 @@ class _NeoButtonState extends State<NeoButton>
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: _pressed ? Alignment.bottomRight : Alignment.topLeft,
-            end: _pressed ? Alignment.topLeft : Alignment.bottomRight,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
             colors: [
-              AppColors.primaryAccent,
-              AppColors.primaryAccent.withOpacity(0.85),
+              _pressed ? AppColors.primaryAccent.withOpacity(0.85) : AppColors.primaryAccent,
+              _pressed ? AppColors.primaryAccent.withOpacity(0.85) : AppColors.primaryAccent.withOpacity(0.9),
             ],
           ),
           borderRadius: BorderRadius.circular(AppTokens.radiusButton),
-          boxShadow: _pressed
-              ? AppTokens.neoShadowsPressed
-              : AppTokens.neoShadows,
         ),
         alignment: Alignment.center,
         child: widget.isLoading

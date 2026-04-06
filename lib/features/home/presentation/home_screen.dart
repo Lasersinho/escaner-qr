@@ -323,20 +323,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget _buildFab(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         shape: BoxShape.circle,
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [AppColors.fabGradientStart, AppColors.fabGradientEnd],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primaryAccent.withOpacity(0.45),
-            blurRadius: 20,
-            offset: const Offset(0, 6),
-          ),
-        ],
       ),
       child: FloatingActionButton(
         onPressed: _onFabPressed,
