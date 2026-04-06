@@ -14,4 +14,13 @@ class AttendanceRecord {
   final AttendanceType type;
   final DateTime dateTime;
   final String employeeId;
+
+  factory AttendanceRecord.fromJson(Map<String, dynamic> json) {
+    return AttendanceRecord(
+      id: json['Identifier'].toString(),
+      type: json['Type'] == 1 ? AttendanceType.entry : AttendanceType.exit,
+      dateTime: DateTime.parse(json['Timestamp'] as String),
+      employeeId: json['Collaborator'] as String? ?? 'Unknown',
+    );
+  }
 }

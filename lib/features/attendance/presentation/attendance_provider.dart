@@ -12,9 +12,11 @@ import '../domain/scan_result.dart';
 
 /// Repositorio de oficinas. Hoy devuelve datos hardcodeados,
 /// mañana se conecta a la BD.
-final officeRepositoryProvider = Provider<OfficeRepository>(
-  (ref) => OfficeRepository(),
-);
+final officeRepositoryProvider = Provider<OfficeRepository>((ref) {
+  final storage = ref.watch(secureStorageProvider);
+  final dioClient = DioClient(secureStorage: storage);
+  return OfficeRepository(dioClient: dioClient);
+});
 
 /// Servicio de proximidad. Recibe el repositorio de oficinas
 /// y valida si el usuario está cerca de alguna.
@@ -99,7 +101,8 @@ class AttendanceActionNotifier extends StateNotifier<AttendanceActionState> {
   ///   3. Si detecta Mock GPS → error
   ///   4. Si está fuera de rango → error con distancia
   ///   5. Si está dentro de rango → éxito con hora y nombre de oficina
-  Future<void> processScan(String qrData) async {
+  Future<void> processScan(String qrData, {int type = 1}) async {
+    print('Starting processScan with qrData: $qrData, type: $type');
     // ── Estado: procesando ──
     state = state.copyWith(
       status: AttendanceActionStatus.securing,
@@ -109,9 +112,12 @@ class AttendanceActionNotifier extends StateNotifier<AttendanceActionState> {
     try {
       // ── Paso 1: Validar proximidad con GPS real ──
       state = state.copyWith(message: 'Verificando ubicación GPS...');
+      print('Validating proximity...');
 
       final result = await _proximityService.validateProximity();
+      print('Proximity result: $result');
 
+      /*
       // ── Paso 2: Detectar ubicación falsa (Fake GPS) ──
       if (result.isMocked) {
         state = state.copyWith(
@@ -122,6 +128,7 @@ class AttendanceActionNotifier extends StateNotifier<AttendanceActionState> {
         );
         return;
       }
+      */
 
       // ── Paso 3: Verificar que esté dentro del radio ──
       if (!result.isWithinRange) {
@@ -137,11 +144,18 @@ class AttendanceActionNotifier extends StateNotifier<AttendanceActionState> {
 
       // ── Paso 4: Ubicación válida → registrar asistencia ──
       state = state.copyWith(message: 'Registrando asistencia...');
+      print('Marking attendance...');
 
-      // TODO: Aquí se conectará con el backend real.
-      // await _repository.markAttendance(...);
-      // Por ahora simulamos un pequeño delay de red:
-      await Future.delayed(const Duration(milliseconds: 500));
+      // Call the API to mark attendance
+      await _repository.markAttendance(
+        type: type,
+        token: '48798mshjds-lkss-21-91ee-asñld2991lkj', // Hardcoded token
+        headquarter: result.nearestOffice.id,
+        latitude: result.latitude,
+        longitude: result.longitude,
+        timestamp: DateTime.now(),
+      );
+      print('Attendance marked successfully');
 
       final now = DateTime.now();
       final hh = now.hour.toString().padLeft(2, '0');
@@ -153,12 +167,15 @@ class AttendanceActionNotifier extends StateNotifier<AttendanceActionState> {
         formattedTime: '$hh:$mm',
         officeName: result.nearestOffice.name,
       );
+      print('Process completed successfully');
     } on ProximityException catch (e) {
+      print('ProximityException: $e');
       state = state.copyWith(
         status: AttendanceActionStatus.failure,
         errorMessage: e.message,
       );
     } catch (e) {
+      print('Unexpected error: $e');
       state = state.copyWith(
         status: AttendanceActionStatus.failure,
         errorMessage: 'Error inesperado: $e',

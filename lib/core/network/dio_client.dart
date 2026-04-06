@@ -7,7 +7,7 @@ class DioClient {
       : _secureStorage = secureStorage {
     _dio = Dio(
       BaseOptions(
-        baseUrl: 'https://api.mock.com/v1',
+        baseUrl: 'https://context.friomamut.pe/api/',
         connectTimeout: const Duration(seconds: 10),
         receiveTimeout: const Duration(seconds: 10),
         headers: {'Content-Type': 'application/json'},
@@ -18,14 +18,26 @@ class DioClient {
       InterceptorsWrapper(
         onRequest: (options, handler) async {
           final token = await _secureStorage.read(key: _tokenKey);
-          if (token != null) {
+
+          if (token != null && !options.path.contains('/token')) {
             options.headers['Authorization'] = 'Bearer $token';
           }
-          return handler.next(options);
+
+          print('--- REQUEST ---');
+          print('METHOD: ${options.method}');
+          print('URL: ${options.uri}');
+          print('HEADERS: ${options.headers}');
+          print('DATA: ${options.data}');
+
+          handler.next(options);
         },
         onError: (error, handler) {
-          // Centralized error handling – extend as needed.
-          return handler.next(error);
+          print('--- ERROR ---');
+          print('URL: ${error.requestOptions.uri}');
+          print('HEADERS: ${error.requestOptions.headers}');
+          print('STATUS: ${error.response?.statusCode}');
+          print('BODY: ${error.response?.data}');
+          handler.next(error);
         },
       ),
     );

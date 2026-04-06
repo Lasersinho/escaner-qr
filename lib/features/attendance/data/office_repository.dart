@@ -12,41 +12,33 @@
 ///   3. Opcionalmente cachear en local con Hive/SharedPreferences.
 /// ═══════════════════════════════════════════════════════════════════════════
 
+import 'package:dio/dio.dart';
+
+import '../../../core/network/dio_client.dart';
 import '../domain/office.dart';
 
 class OfficeRepository {
+  OfficeRepository({required DioClient dioClient}) : _dio = dioClient.instance;
+
+  final Dio _dio;
 
   /// Devuelve la lista de todas las oficinas registradas.
-  ///
-  /// ┌──────────────────────────────────────────────────────────────────────┐
-  /// │  CUANDO CONECTES LA BD:                                             │
-  /// │                                                                     │
-  /// │  Future<List<Office>> getOffices() async {                          │
-  /// │    final response = await _dio.get('/offices');                     │
-  /// │    final List data = response.data as List;                        │
-  /// │    return data.map((json) => Office.fromJson(json)).toList();       │
-  /// │  }                                                                  │
-  /// └──────────────────────────────────────────────────────────────────────┘
   Future<List<Office>> getOffices() async {
-    // ── DATOS HARDCODEADOS (reemplazar por llamada a BD) ──
-    return const [
-      Office(
-        id: 'office_001',
-        name: 'Oficina Principal',
-        latitude: -12.127896175289106,
-        longitude: -77.02650619107756,
-        allowedRadiusMeters: 300.0,
-        address: 'Lima, Perú',
-      ),
-      // ── AGREGAR MÁS OFICINAS AQUÍ ──
-      // Office(
-      //   id: 'office_002',
-      //   name: 'Sucursal Norte',
-      //   latitude: -12.0000,
-      //   longitude: -77.0000,
-      //   allowedRadiusMeters: 200.0,
-      //   address: 'Los Olivos, Lima',
-      // ),
-    ];
+    try {
+      print('Fetching offices from API...');
+      final response = await _dio.get('headquarters');
+      print('Response received: ${response.data}');
+
+      final List data = response.data as List;
+      final offices = data.map((json) => Office.fromJson(json)).toList();
+      print('Parsed offices: $offices');
+      return offices;
+    } on DioException catch (e) {
+      print('DioException in getOffices: ${e.message}, response: ${e.response?.data}');
+      throw Exception('Error al obtener oficinas: ${e.message}');
+    } catch (e) {
+      print('Unexpected error in getOffices: $e');
+      throw Exception('Error al obtener oficinas: $e');
+    }
   }
 }

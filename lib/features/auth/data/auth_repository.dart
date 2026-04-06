@@ -1,41 +1,64 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../../../core/network/dio_client.dart';
 import '../domain/user.dart';
 
 /// Repository handling authentication logic.
-///
-/// This is a **mock** implementation: any email/password combination
-/// will succeed, returning a fake JWT token and user object.
 class AuthRepository {
-  AuthRepository({required FlutterSecureStorage secureStorage})
-      : _secureStorage = secureStorage;
+  AuthRepository({
+    required FlutterSecureStorage secureStorage,
+    required DioClient dioClient,
+  })  : _secureStorage = secureStorage,
+        _dio = dioClient.instance;
 
   final FlutterSecureStorage _secureStorage;
+  final Dio _dio;
 
   static const String _tokenKey = 'auth_token';
   static const String _userNameKey = 'user_name';
   static const String _userEmailKey = 'user_email';
   static const String _userIdKey = 'user_id';
 
-  /// Simulates a login request. Always succeeds after a short delay.
+  /// Performs login request to the API.
   Future<User> login({
     required String email,
     required String password,
   }) async {
-    // Simulate network delay
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      print('Logging in with email: $email');
+      final response = await _dio.post(
+        'https://context.friomamut.pe/token',
+        data: {
+          'username': email,
+          'password': password,
+        },
+      );
+      print('Login response: ${response.data}');
 
-    const fakeToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock_token';
-    final name = email.split('@').first;
-    const id = 'usr_001';
+      final data = response.data as Map<String, dynamic>;
+      final token = data['token'] as String;
+      final expiration = data['expiration'] as String;
+      print('Token: $token');
 
-    // Persist token and user info securely
-    await _secureStorage.write(key: _tokenKey, value: fakeToken);
-    await _secureStorage.write(key: _userNameKey, value: name);
-    await _secureStorage.write(key: _userEmailKey, value: email);
-    await _secureStorage.write(key: _userIdKey, value: id);
+      // Extract user info from token or assume from email
+      final name = email.split('@').first;
+      const id = 'usr_001'; // Or extract from token if available
 
-    return User(id: id, name: name, email: email);
+      // Persist token and user info securely
+      await _secureStorage.write(key: _tokenKey, value: token);
+      await _secureStorage.write(key: _userNameKey, value: name);
+      await _secureStorage.write(key: _userEmailKey, value: email);
+      await _secureStorage.write(key: _userIdKey, value: id);
+
+      return User(id: id, name: name, email: email);
+    } on DioException catch (e) {
+      print('DioException in login: ${e.message}, response: ${e.response?.data}');
+      throw Exception('Login failed: ${e.response?.data?['message'] ?? e.message}');
+    } catch (e) {
+      print('Unexpected error in login: $e');
+      throw Exception('Login failed: $e');
+    }
   }
 
   /// Checks whether a persisted token exists.

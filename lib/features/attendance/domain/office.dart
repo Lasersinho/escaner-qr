@@ -22,7 +22,7 @@ class Office {
   });
 
   /// Identificador único de la oficina (PK en la base de datos).
-  final String id;
+  final int id;
 
   /// Nombre legible de la oficina (ej: "Sede Principal Lima").
   final String name;
@@ -41,13 +41,16 @@ class Office {
   /// Dirección textual de la oficina (opcional, para mostrar en UI).
   final String? address;
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // 🔧 IMPLEMENTAR: Factory para parsear desde JSON de la base de datos
-  // ─────────────────────────────────────────────────────────────────────────
-  //
-  // Ejemplo de cómo se vería la implementación:
-  //
-  // factory Office.fromJson(Map<String, dynamic> json) {
+  factory Office.fromJson(Map<String, dynamic> json) {
+    return Office(
+      id: json['Identifier'] as int,
+      name: json['Description'] as String,
+      latitude: (json['Latitude'] as num?)?.toDouble() ?? 0.0,
+      longitude: (json['Longitude'] as num?)?.toDouble() ?? 0.0,
+      allowedRadiusMeters: (json['Distance'] as num?)?.toDouble() ?? 300.0,
+      address: json['Description'] as String?, // Usar Description como address
+    );
+  }
   //   return Office(
   //     id: json['id'] as String,
   //     name: json['name'] as String,

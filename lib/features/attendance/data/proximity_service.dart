@@ -27,6 +27,8 @@ class ProximityResult {
     required this.nearestOffice,
     required this.distanceMeters,
     required this.isMocked,
+    required this.latitude,
+    required this.longitude,
   });
 
   /// true si el usuario está dentro del radio permitido de [nearestOffice].
@@ -40,6 +42,12 @@ class ProximityResult {
 
   /// true si el sistema operativo detectó que la ubicación es falsa (Fake GPS).
   final bool isMocked;
+
+  /// Latitud del usuario.
+  final double latitude;
+
+  /// Longitud del usuario.
+  final double longitude;
 
   /// Distancia formateada legible para mostrar en UI.
   String get formattedDistance {
@@ -100,7 +108,18 @@ class ProximityService {
     }
 
     // ── Paso 2: Cargar oficinas desde el repositorio ──
-    final offices = await officeRepository.getOffices();
+    final offices;
+    try {
+      print('Loading offices from repository...');
+      offices = await officeRepository.getOffices();
+      print('Offices loaded: $offices');
+    } catch (e) {
+      print('Error loading offices: $e');
+      throw const ProximityException(
+        'No se pudieron cargar las oficinas desde el servidor. '
+        'Verifica tu conexión a internet.',
+      );
+    }
     if (offices.isEmpty) {
       throw const ProximityException(
         'No hay oficinas registradas en el sistema. '
@@ -136,6 +155,8 @@ class ProximityService {
       nearestOffice: closestOffice,
       distanceMeters: closestDistance,
       isMocked: position.isMocked,
+      latitude: position.latitude,
+      longitude: position.longitude,
     );
   }
 }

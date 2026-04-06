@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../../../core/network/dio_client.dart';
+import '../../auth/presentation/auth_provider.dart';
 import '../domain/attendance_record.dart';
 
 // ── Time Filter ─────────────────────────────────────────────────────────────
@@ -128,8 +132,23 @@ List<AttendanceRecord> _generateMockRecords() {
 
 class AttendanceHistoryNotifier
     extends StateNotifier<AttendanceHistoryState> {
-  AttendanceHistoryNotifier()
-      : super(AttendanceHistoryState(allRecords: _generateMockRecords()));
+  AttendanceHistoryNotifier(this._dio) : super(const AttendanceHistoryState()) {
+    fetchHistory();
+  }
+
+  final Dio _dio;
+
+  Future<void> fetchHistory() async {
+    try {
+      final response = await _dio.get('/turnouts');
+      final List data = response.data as List;
+      final records = data.map((json) => AttendanceRecord.fromJson(json)).toList();
+      state = state.copyWith(allRecords: records);
+    } catch (e) {
+      // Handle error, maybe keep mock or show error
+      state = state.copyWith(allRecords: _generateMockRecords());
+    }
+  }
 
   void setFilter(AttendanceTimeFilter filter) {
     state = state.copyWith(filter: filter);
@@ -151,5 +170,7 @@ class AttendanceHistoryNotifier
 
 final attendanceHistoryProvider = StateNotifierProvider<
     AttendanceHistoryNotifier, AttendanceHistoryState>(
-  (ref) => AttendanceHistoryNotifier(),
+  (ref) => AttendanceHistoryNotifier(
+    DioClient(secureStorage: ref.watch(secureStorageProvider)).instance,
+  ),
 );

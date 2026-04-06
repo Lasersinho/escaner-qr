@@ -97,7 +97,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   // ── Marcar asistencia directo ───────────────────────────────────────────
 
   void _onFabPressed() {
-    ref.read(attendanceActionProvider.notifier).processScan('manual_attendance');
+    ref.read(attendanceActionProvider.notifier).processScan('manual_attendance', type: _isEntryMode ? 1 : 2);
   }
 
   void _resetAction() {
