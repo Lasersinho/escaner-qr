@@ -54,17 +54,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       // Regla de Negocio: Se deben conceder todos los accesos nativos para entrar
       final Map<Permission, PermissionStatus> statuses = await [
         Permission.location,
-        Permission.camera,
       ].request();
 
       final bool locGranted = statuses[Permission.location]?.isGranted ?? false;
-      final bool camGranted = statuses[Permission.camera]?.isGranted ?? false;
 
-      if (!locGranted || !camGranted) {
+      if (!locGranted) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Operación Denegada: Requerimos permisos de GPS y Cámara obligatoriamente para tu sesión.'),
+            content: Text('Operación Denegada: Requerimos permisos de GPS obligatoriamente para tu sesión.'),
             backgroundColor: AppColors.error,
           ),
         );
