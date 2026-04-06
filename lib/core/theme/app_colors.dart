@@ -1,29 +1,19 @@
 import 'package:flutter/material.dart';
 
 /// ═══════════════════════════════════════════════════════════════════════════
-/// 🎨  PALETA DE COLORES — Pulse App
+/// 🎨  PALETA DE COLORES — Pulse App (Edición Premium "Deep Indigo")
 /// ═══════════════════════════════════════════════════════════════════════════
 ///
-/// Para cambiar un color, solo modifica el valor hexadecimal.
-/// Formato: Color(0xAARRGGBB)
-///   AA = opacidad (FF = 100%, 80 = 50%, 00 = 0%)
-///   RR = rojo,  GG = verde,  BB = azul
-///
-/// Ejemplo: Color(0xFF00C4CC)
-///            ↑↑  ↑↑↑↑↑↑
-///         opaco  color teal
-///
-/// Herramientas para elegir colores:
-///   • https://colorhunt.co
-///   • https://coolors.co
-///   • https://www.color-hex.com
+/// He seleccionado una paleta basada en Indigo y Slate Blue. 
+/// Es una combinación que transmite confianza, profesionalismo y es
+/// muy cómoda a la vista (menos "vibrante" que el teal puro).
 /// ═══════════════════════════════════════════════════════════════════════════
 abstract final class AppColors {
 
   // ┌─────────────────────────────────────────────────────────────────────────┐
-  // │  FONDO DE LA APP (gradiente de esquina a esquina)                      │
+  // │  FONDO DE LA APP                                                       │
   // └─────────────────────────────────────────────────────────────────────────┘
-  static const Color backgroundStart = Color(0xFFFBFBFC);  // Gris casi blanco
+  static const Color backgroundStart = Color(0xFFF8FAFC);  // Slate muy claro
   static const Color backgroundEnd   = Color(0xFFFFFFFF);   // Blanco puro
 
   static const LinearGradient backgroundGradient = LinearGradient(
@@ -33,53 +23,52 @@ abstract final class AppColors {
   );
 
   // ┌─────────────────────────────────────────────────────────────────────────┐
-  // │  COLORES PRINCIPALES (botones, FAB, chips activos, avatares)           │
+  // │  COLORES PRINCIPALES (Indigo Moderno)                                  │
   // └─────────────────────────────────────────────────────────────────────────┘
-  static const Color primaryAccent   = Color(0xFF00C4CC);   // Teal eléctrico
-  static const Color secondaryAccent = Color(0xFFE0A9A5);   // Rosa-dorado suave
+  static const Color primaryAccent   = Color(0xFF4F46E5);   // Indigo 600 (Elegante)
+  static const Color secondaryAccent = Color(0xFF818CF8);   // Indigo claro
 
   // ┌─────────────────────────────────────────────────────────────────────────┐
-  // │  CRISTAL / GLASS (paneles translúcidos)                                │
+  // │  CRISTAL / GLASS                                                       │
   // └─────────────────────────────────────────────────────────────────────────┘
-  static const Color glassPanel  = Color(0x66FFFFFF);       // 40% blanco
-  static const Color glassBorder = Color(0x33FFFFFF);       // 20% blanco
-  static const Color glassShadow = Color(0x1A000000);       // 10% negro
+  static const Color glassPanel  = Color(0x99FFFFFF);       // 60% blanco (más legible)
+  static const Color glassBorder = Color(0x4DFFFFFF);       // 30% blanco
+  static const Color glassShadow = Color(0x0D000000);       // Sombra muy sutil
 
   // ┌─────────────────────────────────────────────────────────────────────────┐
   // │  TEXTO                                                                 │
   // └─────────────────────────────────────────────────────────────────────────┘
-  static const Color textPrimary   = Color(0xFF1A1A1A);     // Negro suave
-  static const Color textSecondary = Color(0xFF757575);     // Gris medio
-  static const Color textOnAccent  = Color(0xFFFFFFFF);     // Blanco (sobre botones)
+  static const Color textPrimary   = Color(0xFF1E293B);     // Slate oscuro (mejor contraste)
+  static const Color textSecondary = Color(0xFF64748B);     // Slate grisáceo
+  static const Color textOnAccent  = Color(0xFFFFFFFF);     // Blanco
 
   // ┌─────────────────────────────────────────────────────────────────────────┐
-  // │  ESTADO — Éxito / Error (check verde, X roja, alertas)                 │
+  // │  ESTADO — Éxito / Error                                                │
   // └─────────────────────────────────────────────────────────────────────────┘
-  static const Color success = Color(0xFF4CAF50);           // Verde Material
-  static const Color error   = Color(0xFFE53935);           // Rojo Material
+  static const Color success = Color(0xFF10B981);           // Esmeralda (más moderno que el verde puro)
+  static const Color error   = Color(0xFFF43F5E);           // Rose/Red moderno
 
   // ┌─────────────────────────────────────────────────────────────────────────┐
-  // │  INPUTS (campos de texto del login)                                    │
+  // │  INPUTS                                                                │
   // └─────────────────────────────────────────────────────────────────────────┘
-  static const Color inputFill   = Color(0x1A000000);       // 10% negro "tallado"
-  static const Color inputBorder = Color(0x22000000);       // 13% negro
+  static const Color inputFill   = Color(0x0F000000);       // Muy sutil
+  static const Color inputBorder = Color(0x1A000000);       
 
   // ┌─────────────────────────────────────────────────────────────────────────┐
   // │  FAB / BOTÓN DE MARCAR ASISTENCIA                                      │
-  // │  (el botón "+" flotante abajo a la derecha)                            │
   // └─────────────────────────────────────────────────────────────────────────┘
-  static const Color fabGradientStart = Color(0xFF00C4CC);  // Igual a primaryAccent
-  static const Color fabGradientEnd   = Color(0xFF00A8AE);  // Teal oscuro
+  static const Color fabGradientStart = Color(0xFF4F46E5);  
+  static const Color fabGradientEnd   = Color(0xFF4338CA);  // Indigo profundo
 
   // ┌─────────────────────────────────────────────────────────────────────────┐
-  // │  POPUP DE ÉXITO — Encabezado del check ✓                               │
+  // │  POPUP DE ÉXITO                                                        │
   // └─────────────────────────────────────────────────────────────────────────┘
-  static const Color successCircleBg  = Color(0xFF4CAF50);  // Fondo del círculo ✓
-  static const Color successIcon      = Color(0xFFFFFFFF);  // Ícono ✓
+  static const Color successCircleBg  = Color(0xFF10B981);  
+  static const Color successIcon      = Color(0xFFFFFFFF);  
 
   // ┌─────────────────────────────────────────────────────────────────────────┐
-  // │  POPUP DE ERROR — Encabezado del X                                     │
+  // │  POPUP DE ERROR                                                        │
   // └─────────────────────────────────────────────────────────────────────────┘
-  static const Color errorCircleBg = Color(0xFFE53935);     // Fondo del círculo X
-  static const Color errorIcon     = Color(0xFFFFFFFF);     // Ícono X
+  static const Color errorCircleBg = Color(0xFFF43F5E);     
+  static const Color errorIcon     = Color(0xFFFFFFFF);     
 }
