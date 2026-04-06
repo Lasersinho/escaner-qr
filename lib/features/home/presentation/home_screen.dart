@@ -6,20 +6,43 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/glass_card.dart';
+import '../../../shared/widgets/neo_button.dart';
 import '../../attendance/domain/attendance_record.dart';
 import '../../attendance/presentation/attendance_history_provider.dart';
+import '../../attendance/presentation/attendance_provider.dart';
 import '../../auth/presentation/auth_provider.dart';
 
 /// Main home screen shown after authentication.
-class HomeScreen extends ConsumerWidget {
+/// El FAB "+" marca asistencia directamente y muestra popup de éxito.
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  /// true = próxima marcación es Entrada, false = Salida.
+  /// Se alterna automáticamente tras cada marcación exitosa.
+  bool _isEntryMode = true;
+
+  @override
+  Widget build(BuildContext context) {
     final historyState = ref.watch(attendanceHistoryProvider);
     final user = ref.watch(authProvider).user;
+    final actionState = ref.watch(attendanceActionProvider);
 
     final initials = _getInitials(user?.name ?? user?.email ?? 'U');
+
+    // Escuchar cambios de estado → popups
+    ref.listen<AttendanceActionState>(attendanceActionProvider, (prev, next) {
+      if (next.status == AttendanceActionStatus.success) {
+        _showSuccessDialog(next.formattedTime ?? '--:--');
+      } else if (next.status == AttendanceActionStatus.failure) {
+        _showErrorDialog(next.errorMessage ?? 'Error desconocido');
+      }
+    });
 
     return Scaffold(
       backgroundColor: AppColors.backgroundStart,
@@ -49,11 +72,25 @@ class HomeScreen extends ConsumerWidget {
               ],
             ),
           ),
+
+          // ── Processing overlay ──
+          if (actionState.status == AttendanceActionStatus.securing)
+            _buildProcessingOverlay(actionState.message ?? 'Procesando...'),
         ],
       ),
-      // FAB "+" to access QR scanner
+      // FAB "+" marca asistencia directamente
       floatingActionButton: _buildFab(context),
     );
+  }
+
+  // ── Marcar asistencia directo ───────────────────────────────────────────
+
+  void _onFabPressed() {
+    ref.read(attendanceActionProvider.notifier).processScan('manual_attendance');
+  }
+
+  void _resetAction() {
+    ref.read(attendanceActionProvider.notifier).reset();
   }
 
   // ── AppBar ───────────────────────────────────────────────────────────────
@@ -280,7 +317,7 @@ class HomeScreen extends ConsumerWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.primaryAccent, Color(0xFF00A8AE)],
+          colors: [AppColors.fabGradientStart, AppColors.fabGradientEnd],
         ),
         boxShadow: [
           BoxShadow(
@@ -291,12 +328,262 @@ class HomeScreen extends ConsumerWidget {
         ],
       ),
       child: FloatingActionButton(
-        onPressed: () => context.push('/scanner'),
+        onPressed: _onFabPressed,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        tooltip: 'Marcar Asistencia',
+        tooltip: _isEntryMode ? 'Marcar Entrada' : 'Marcar Salida',
         child: const Icon(Icons.touch_app_rounded,
             color: Colors.white, size: 30),
+      ),
+    );
+  }
+
+  // ── Processing overlay ──────────────────────────────────────────────────
+
+  Widget _buildProcessingOverlay(String message) {
+    return Positioned.fill(
+      child: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            color: Colors.black.withOpacity(0.4),
+            child: Center(
+              child: GlassCard(
+                width: 220,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryAccent.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                            color: AppColors.primaryAccent.withOpacity(0.3)),
+                      ),
+                      child: const SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 4,
+                          strokeCap: StrokeCap.round,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                              AppColors.primaryAccent),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      message,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Dialogs ─────────────────────────────────────────────────────────────
+
+  void _showSuccessDialog(String time) {
+    final isEntry = _isEntryMode;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black87.withOpacity(0.6),
+      builder: (_) => TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.8, end: 1.0),
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutBack,
+        builder: (context, scale, child) => Transform.scale(
+          scale: scale,
+          child: Material(
+            type: MaterialType.transparency,
+            child: Center(
+              child: GlassCard(
+                width: 320,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // ── Ícono de check (colores editables en app_colors.dart) ──
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.successCircleBg,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.successCircleBg.withOpacity(0.4),
+                            blurRadius: 20,
+                            spreadRadius: 5,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(Icons.check_rounded,
+                          color: AppColors.successIcon, size: 48),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      isEntry
+                          ? '¡Entrada Registrada!'
+                          : '¡Salida Registrada!',
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryAccent.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        time,
+                        style: const TextStyle(
+                          color: AppColors.primaryAccent,
+                          fontSize: 36,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      isEntry
+                          ? 'Tu registro de entrada fue exitoso'
+                          : 'Tu registro de salida fue exitoso',
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      child: NeoButton(
+                        label: 'Aceptar',
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          // Alternar entrada/salida para la próxima vez
+                          setState(() => _isEntryMode = !_isEntryMode);
+                          _resetAction();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black87.withOpacity(0.6),
+      builder: (_) => TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.8, end: 1.0),
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutBack,
+        builder: (context, scale, child) => Transform.scale(
+          scale: scale,
+          child: Material(
+            type: MaterialType.transparency,
+            child: Center(
+              child: GlassCard(
+                width: 320,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.errorCircleBg,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.errorCircleBg.withOpacity(0.4),
+                            blurRadius: 20,
+                            spreadRadius: 5,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(Icons.close_rounded,
+                          color: AppColors.errorIcon, size: 48),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Error al Registrar',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.error.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(16),
+                        border:
+                            Border.all(color: AppColors.error.withOpacity(0.1)),
+                      ),
+                      child: Text(
+                        message,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 15,
+                          height: 1.4,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      child: NeoButton(
+                        label: 'Reintentar',
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          _resetAction();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
