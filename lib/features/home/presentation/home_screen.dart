@@ -201,6 +201,7 @@ class HomeScreen extends ConsumerWidget {
               onPressed: () async {
                 final range = await showDateRangePicker(
                   context: context,
+                  locale: const Locale('es', 'ES'),
                   firstDate: DateTime(2020),
                   lastDate: DateTime.now(),
                   builder: (context, child) {
@@ -293,8 +294,8 @@ class HomeScreen extends ConsumerWidget {
         onPressed: () => context.push('/scanner'),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        tooltip: 'Escanear QR',
-        child: const Icon(Icons.add_rounded,
+        tooltip: 'Marcar Asistencia',
+        child: const Icon(Icons.touch_app_rounded,
             color: Colors.white, size: 30),
       ),
     );

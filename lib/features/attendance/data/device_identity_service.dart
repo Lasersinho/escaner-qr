@@ -45,7 +45,7 @@ class DeviceIdentityService {
         // Si precisas el `android_id` estricto (Settings.Secure.ANDROID_ID), 
         // normalmente requieres hoy en día la librería complementaria `android_id`.
         // Para este contexto, extraemos un identificador con device_info_plus:
-        hardwareId = androidInfo.serialNumber != 'unknown' ? androidInfo.serialNumber : androidInfo.id;
+        hardwareId = androidInfo.id;
       } else if (Platform.isIOS) {
         final iosInfo = await deviceInfo.iosInfo;
         hardwareId = iosInfo.identifierForVendor; // Clásico IDFV

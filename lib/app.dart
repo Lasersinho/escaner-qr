@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:flutter_localizations/flutter_localizations.dart';
+
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/auth_provider.dart';
 import 'features/auth/presentation/login_screen.dart';
@@ -22,6 +24,14 @@ class OfficeFlowApp extends ConsumerWidget {
       title: 'OfficeFlow',
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(),
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('es', 'ES'),
+      ],
       routerConfig: router,
     );
   }
@@ -36,8 +46,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     initialLocation: '/login',
     refreshListenable: _AuthRefreshListenable(ref, authProvider),
     redirect: (context, state) {
-      final isAuthenticated =
-          authState.status == AuthStatus.authenticated;
+      final isAuthenticated = authState.status == AuthStatus.authenticated;
       final isOnLogin = state.matchedLocation == '/login';
 
       if (isAuthenticated && isOnLogin) return '/home';
@@ -79,10 +88,10 @@ final goRouterProvider = Provider<GoRouter>((ref) {
 
 /// Bridges Riverpod changes to [GoRouter.refreshListenable].
 class _AuthRefreshListenable extends ChangeNotifier {
-  _AuthRefreshListenable(Ref ref, StateNotifierProvider<AuthNotifier, AuthState> provider) {
-    ref.listen<AuthState>(provider, (_, _) {
+  _AuthRefreshListenable(
+      Ref ref, StateNotifierProvider<AuthNotifier, AuthState> provider) {
+    ref.listen<AuthState>(provider, (prev, next) {
       notifyListeners();
     });
   }
 }
-

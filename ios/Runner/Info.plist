@@ -2,8 +2,7 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSCameraUsageDescription</key>
-	<string>Requerimos un acceso momentáneo a la cámara estrictamente para escanear el código QR correspondiente al reloj checador de salida.</string>
+
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Necesitamos verificar tu ubicación mediante GPS para certificar, por motivos de seguridad empresarial, que te encuentras presencialmente en la oficina al momento de marcar tu asistencia o salida.</string>
 	<key>NSLocationAlwaysUsageDescription</key>

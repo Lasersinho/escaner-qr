@@ -4,7 +4,7 @@ publish_to: "none"
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.11.3
+  sdk: ^3.4.0
 
 dependencies:
   flutter:
@@ -22,10 +22,8 @@ dependencies:
   flutter_svg: ^2.0.17
 
   # Functional Features
-  mobile_scanner: ^6.0.2
   geolocator: ^13.0.2
   dio: ^5.7.0
-  camera: ^0.11.0+2
   path_provider: ^2.1.5
   path: ^1.9.0
 
@@ -37,6 +35,8 @@ dependencies:
   json_annotation: ^4.9.0
   permission_handler: ^12.0.1
   device_info_plus: ^12.4.0
+  flutter_localizations:
+    sdk: flutter
 
 dev_dependencies:
   flutter_test:
