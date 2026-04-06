@@ -8,8 +8,8 @@ def main():
     
     img = Image.new('RGB', (size, size))
     draw = ImageDraw.Draw(img)
-    color1 = (0, 196, 204)
-    color2 = (224, 169, 165)
+    color1 = (79, 70, 229)
+    color2 = (129, 140, 248)
     for y in range(size):
         for x in range(size):
             dist = (x + y) / (2 * size)
