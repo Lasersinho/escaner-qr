@@ -39,6 +39,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ref.listen<AttendanceActionState>(attendanceActionProvider, (prev, next) {
       if (next.status == AttendanceActionStatus.success) {
         _showSuccessDialog(next.formattedTime ?? '--:--');
+        
+        // Insert mock record in the history to show visually
+        final now = DateTime.now();
+        ref.read(attendanceHistoryProvider.notifier).addRecord(
+          AttendanceRecord(
+            id: 'mock_${now.millisecondsSinceEpoch}',
+            type: _isEntryMode ? AttendanceType.entry : AttendanceType.exit,
+            dateTime: now,
+            employeeId: 'usr_001',
+          ),
+        );
       } else if (next.status == AttendanceActionStatus.failure) {
         _showErrorDialog(next.errorMessage ?? 'Error desconocido');
       }
