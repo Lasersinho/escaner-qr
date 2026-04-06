@@ -3,29 +3,76 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../attendance/domain/attendance_record.dart';
-import '../../attendance/presentation/attendance_history_provider.dart';
+import '../../../shared/widgets/glass_card.dart';
+import '../../../shared/widgets/neo_button.dart';
+import '../../attendance/presentation/attendance_provider.dart';
 import '../../auth/presentation/auth_provider.dart';
 
-/// Main home screen shown after authentication.
-class HomeScreen extends ConsumerWidget {
+/// Pantalla principal ultra-rápida: Login → Botón → Éxito.
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final historyState = ref.watch(attendanceHistoryProvider);
-    final user = ref.watch(authProvider).user;
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
 
-    final initials = _getInitials(user?.name ?? user?.email ?? 'U');
+class _HomeScreenState extends ConsumerState<HomeScreen>
+    with SingleTickerProviderStateMixin {
+  bool _hasMarked = false;
+  late final AnimationController _pulseCtrl;
+  late final Animation<double> _pulseAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    )..repeat(reverse: true);
+    _pulseAnim = Tween<double>(begin: 1.0, end: 1.06).animate(
+      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pulseCtrl.dispose();
+    super.dispose();
+  }
+
+  void _markAttendance() {
+    if (_hasMarked) return;
+    setState(() => _hasMarked = true);
+    ref.read(attendanceActionProvider.notifier).processScan('manual_attendance');
+  }
+
+  void _resetState() {
+    ref.read(attendanceActionProvider.notifier).reset();
+    setState(() => _hasMarked = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final actionState = ref.watch(attendanceActionProvider);
+    final user = ref.watch(authProvider).user;
+    final greeting = _buildGreeting(user?.name ?? 'Usuario');
+
+    // Listen for state changes → show dialogs
+    ref.listen<AttendanceActionState>(attendanceActionProvider, (prev, next) {
+      if (next.status == AttendanceActionStatus.success) {
+        _showSuccessDialog(next.formattedTime ?? '--:--');
+      } else if (next.status == AttendanceActionStatus.failure) {
+        _showErrorDialog(next.errorMessage ?? 'Error desconocido');
+      }
+    });
 
     return Scaffold(
       backgroundColor: AppColors.backgroundStart,
       body: Stack(
         children: [
-          // Background gradient
+          // ── Background gradient ──
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -38,56 +85,170 @@ class HomeScreen extends ConsumerWidget {
 
           SafeArea(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildAppBar(context, initials, user?.name ?? 'Usuario'),
-                _buildFilterChips(context, ref, historyState.filter),
+                _buildTopBar(context, user?.name ?? 'Usuario'),
                 Expanded(
-                  child: _buildAttendanceList(
-                      context, historyState.groupedByDay),
+                  child: Center(
+                    child: SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // ── Greeting ──
+                            Text(
+                              greeting,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            // ── Live clock ──
+                            _LiveClock(),
+                            const SizedBox(height: 48),
+
+                            // ── Big Pulse Button ──
+                            AnimatedBuilder(
+                              animation: _pulseAnim,
+                              builder: (context, child) {
+                                return Transform.scale(
+                                  scale: _hasMarked ? 1.0 : _pulseAnim.value,
+                                  child: child,
+                                );
+                              },
+                              child: GestureDetector(
+                                onTap: _hasMarked ? null : _markAttendance,
+                                child: Container(
+                                  width: 200,
+                                  height: 200,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: _hasMarked
+                                          ? [
+                                              AppColors.textSecondary
+                                                  .withOpacity(0.3),
+                                              AppColors.textSecondary
+                                                  .withOpacity(0.2),
+                                            ]
+                                          : [
+                                              AppColors.primaryAccent,
+                                              const Color(0xFF00A8AE),
+                                            ],
+                                    ),
+                                    boxShadow: _hasMarked
+                                        ? []
+                                        : [
+                                            BoxShadow(
+                                              color: AppColors.primaryAccent
+                                                  .withOpacity(0.4),
+                                              blurRadius: 40,
+                                              spreadRadius: 8,
+                                              offset: const Offset(0, 8),
+                                            ),
+                                            BoxShadow(
+                                              color: AppColors.primaryAccent
+                                                  .withOpacity(0.15),
+                                              blurRadius: 80,
+                                              spreadRadius: 20,
+                                            ),
+                                          ],
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.touch_app_rounded,
+                                        color: _hasMarked
+                                            ? Colors.white54
+                                            : Colors.white,
+                                        size: 56,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'MARCAR',
+                                        style: TextStyle(
+                                          color: _hasMarked
+                                              ? Colors.white54
+                                              : Colors.white,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: 2,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 32),
+
+                            // ── Instruction text ──
+                            Text(
+                              _hasMarked
+                                  ? 'Procesando tu asistencia...'
+                                  : 'Pulsa para registrar tu asistencia',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 15,
+                                fontWeight:
+                                    _hasMarked ? FontWeight.w500 : FontWeight.w400,
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
+
+          // ── Processing overlay ──
+          if (actionState.status == AttendanceActionStatus.securing)
+            _buildProcessingOverlay(actionState.message ?? 'Procesando...'),
         ],
       ),
-      // FAB "+" to access QR scanner
-      floatingActionButton: _buildFab(context),
     );
   }
 
-  // ── AppBar ───────────────────────────────────────────────────────────────
+  // ── Top Bar ─────────────────────────────────────────────────────────────
 
-  Widget _buildAppBar(
-      BuildContext context, String initials, String name) {
+  Widget _buildTopBar(BuildContext context, String name) {
+    final initials = _getInitials(name);
+
     return Padding(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.all(16.0),
       child: Row(
         children: [
-          // Title
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Pulse',
-                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.5,
-                      ),
-                ),
-              ],
+          // Logo / Title
+          const Expanded(
+            child: Text(
+              'Pulse',
+              style: TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+                letterSpacing: -0.5,
+              ),
             ),
           ),
 
-          // Profile button
+          // Profile avatar
           GestureDetector(
             onTap: () => context.push('/profile'),
             child: Container(
-              width: 46,
-              height: 46,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: const LinearGradient(
@@ -111,9 +272,8 @@ class HomeScreen extends ConsumerWidget {
                   initials,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
                   ),
                 ),
               ),
@@ -124,184 +284,262 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  // ── Filter Chips ─────────────────────────────────────────────────────────
+  // ── Processing overlay ──────────────────────────────────────────────────
 
-  Widget _buildFilterChips(BuildContext context, WidgetRef ref,
-      AttendanceTimeFilter currentFilter) {
-    return Padding(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: AttendanceTimeFilter.values.where((f) => f != AttendanceTimeFilter.custom).map((filter) {
-                  final isSelected = filter == currentFilter;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: GestureDetector(
-                      onTap: () => ref
-                          .read(attendanceHistoryProvider.notifier)
-                          .setFilter(filter),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? AppColors.primaryAccent
-                              : AppColors.inputFill,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: isSelected
-                                ? AppColors.primaryAccent
-                                : AppColors.inputBorder,
-                            width: 1,
-                          ),
-                          boxShadow: isSelected
-                              ? [
-                                  BoxShadow(
-                                    color: AppColors.primaryAccent
-                                        .withOpacity(0.25),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 3),
-                                  )
-                                ]
-                              : null,
-                        ),
-                        child: Text(
-                          filter.label,
-                          style: TextStyle(
-                            color: isSelected
-                                ? Colors.white
-                                : AppColors.textSecondary,
-                            fontSize: 13,
-                            fontWeight: isSelected
-                                ? FontWeight.w600
-                                : FontWeight.w400,
-                          ),
+  Widget _buildProcessingOverlay(String message) {
+    return Positioned.fill(
+      child: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            color: Colors.black.withOpacity(0.4),
+            child: Center(
+              child: GlassCard(
+                width: 220,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryAccent.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                            color: AppColors.primaryAccent.withOpacity(0.3)),
+                      ),
+                      child: const SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 4,
+                          strokeCap: StrokeCap.round,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                              AppColors.primaryAccent),
                         ),
                       ),
                     ),
-                  );
-                }).toList(),
+                    const SizedBox(height: 24),
+                    Text(
+                      message,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-          
-          // Calendar filter button
-          Container(
-            decoration: BoxDecoration(
-              color: currentFilter == AttendanceTimeFilter.custom ? AppColors.primaryAccent.withOpacity(0.1) : Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: IconButton(
-              onPressed: () async {
-                final range = await showDateRangePicker(
-                  context: context,
-                  locale: const Locale('es', 'ES'),
-                  firstDate: DateTime(2020),
-                  lastDate: DateTime.now(),
-                  builder: (context, child) {
-                    return Theme(
-                      data: Theme.of(context).copyWith(
-                        colorScheme: const ColorScheme.light(
-                          primary: AppColors.primaryAccent,
-                          onPrimary: Colors.white,
-                          surface: AppColors.backgroundEnd,
-                          onSurface: AppColors.textPrimary,
+        ),
+      ),
+    );
+  }
+
+  // ── Dialogs ─────────────────────────────────────────────────────────────
+
+  void _showSuccessDialog(String time) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black87.withOpacity(0.6),
+      builder: (_) => TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.8, end: 1.0),
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutBack,
+        builder: (context, scale, child) => Transform.scale(
+          scale: scale,
+          child: Material(
+            type: MaterialType.transparency,
+            child: Center(
+              child: GlassCard(
+                width: 320,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.success.withOpacity(0.15),
+                        border: Border.all(
+                            color: AppColors.success.withOpacity(0.4),
+                            width: 2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.success.withOpacity(0.2),
+                            blurRadius: 20,
+                            spreadRadius: 5,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(Icons.check_rounded,
+                          color: AppColors.success, size: 48),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      '¡Asistencia Marcada!',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryAccent.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        time,
+                        style: const TextStyle(
+                          color: AppColors.primaryAccent,
+                          fontSize: 36,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.5,
                         ),
                       ),
-                      child: child!,
-                    );
-                  },
-                );
-                if (range != null) {
-                  ref.read(attendanceHistoryProvider.notifier).setCustomDateRange(range);
-                }
-              },
-              icon: Icon(
-                Icons.calendar_month_rounded,
-                color: currentFilter == AttendanceTimeFilter.custom ? AppColors.primaryAccent : AppColors.textSecondary,
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Tu registro fue exitoso',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      child: NeoButton(
+                        label: 'Aceptar',
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          _resetState();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              tooltip: 'Filtrar por fecha',
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 
-  // ── Attendance List ──────────────────────────────────────────────────────
-
-  Widget _buildAttendanceList(
-      BuildContext context,
-      Map<DateTime, List<AttendanceRecord>> groupedByDay) {
-    if (groupedByDay.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.event_busy_rounded,
-                size: 56,
-                color: AppColors.textSecondary.withOpacity(0.4)),
-            const SizedBox(height: 12),
-            Text(
-              'Sin registros en este período',
-              style: Theme.of(context).textTheme.bodyMedium,
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black87.withOpacity(0.6),
+      builder: (_) => TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.8, end: 1.0),
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutBack,
+        builder: (context, scale, child) => Transform.scale(
+          scale: scale,
+          child: Material(
+            type: MaterialType.transparency,
+            child: Center(
+              child: GlassCard(
+                width: 320,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.error.withOpacity(0.15),
+                        border: Border.all(
+                            color: AppColors.error.withOpacity(0.4),
+                            width: 2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.error.withOpacity(0.2),
+                            blurRadius: 20,
+                            spreadRadius: 5,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(Icons.close_rounded,
+                          color: AppColors.error, size: 48),
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Error al Registrar',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.error.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(16),
+                        border:
+                            Border.all(color: AppColors.error.withOpacity(0.1)),
+                      ),
+                      child: Text(
+                        message,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 15,
+                          height: 1.4,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      child: NeoButton(
+                        label: 'Reintentar',
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          _resetState();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ],
-        ),
-      );
-    }
-
-    final days = groupedByDay.keys.toList()
-      ..sort((a, b) => b.compareTo(a));
-
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
-      itemCount: days.length,
-      itemBuilder: (context, index) {
-        final day = days[index];
-        final records = groupedByDay[day]!;
-        return _DaySection(day: day, records: records);
-      },
-    );
-  }
-
-  // ── FAB ──────────────────────────────────────────────────────────────────
-
-  Widget _buildFab(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.primaryAccent, Color(0xFF00A8AE)],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primaryAccent.withOpacity(0.45),
-            blurRadius: 20,
-            offset: const Offset(0, 6),
           ),
-        ],
-      ),
-      child: FloatingActionButton(
-        onPressed: () => context.push('/scanner'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        tooltip: 'Marcar Asistencia',
-        child: const Icon(Icons.touch_app_rounded,
-            color: Colors.white, size: 30),
+        ),
       ),
     );
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────
+
+  String _buildGreeting(String name) {
+    final hour = DateTime.now().hour;
+    final firstName = name.split(' ').first;
+    if (hour < 12) return 'Buenos días, $firstName';
+    if (hour < 18) return 'Buenas tardes, $firstName';
+    return 'Buenas noches, $firstName';
+  }
 
   String _getInitials(String name) {
     final parts = name.trim().split(RegExp(r'[\s._@]+'));
@@ -315,166 +553,48 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-// ── Day Section ─────────────────────────────────────────────────────────────
+// ── Live Clock Widget ──────────────────────────────────────────────────────
 
-class _DaySection extends StatelessWidget {
-  const _DaySection({
-    required this.day,
-    required this.records,
-  });
-
-  final DateTime day;
-  final List<AttendanceRecord> records;
-
+class _LiveClock extends StatefulWidget {
   @override
-  Widget build(BuildContext context) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final yesterday = today.subtract(const Duration(days: 1));
-
-    String dayLabel;
-    if (day == today) {
-      dayLabel = 'Hoy';
-    } else if (day == yesterday) {
-      dayLabel = 'Ayer';
-    } else {
-      dayLabel = DateFormat('EEEE, d MMM', 'es').format(day);
-      dayLabel = dayLabel[0].toUpperCase() + dayLabel.substring(1);
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Day label
-        Padding(
-          padding: const EdgeInsets.only(top: 16, bottom: 8),
-          child: Row(
-            children: [
-              Text(
-                dayLabel,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                      color: AppColors.textPrimary,
-                    ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Container(
-                  height: 1,
-                  color: AppColors.inputBorder,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryAccent.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '${records.length}',
-                  style: TextStyle(
-                    color: AppColors.primaryAccent,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        // Record cards
-        ...records.map((record) => _AttendanceCard(record: record)),
-      ],
-    );
-  }
+  State<_LiveClock> createState() => _LiveClockState();
 }
 
-// ── Attendance Card ──────────────────────────────────────────────────────────
+class _LiveClockState extends State<_LiveClock> {
+  late String _time;
 
-class _AttendanceCard extends StatelessWidget {
-  const _AttendanceCard({required this.record});
+  @override
+  void initState() {
+    super.initState();
+    _updateTime();
+    // Update every second
+    Future.doWhile(() async {
+      await Future.delayed(const Duration(seconds: 1));
+      if (!mounted) return false;
+      _updateTime();
+      return true;
+    });
+  }
 
-  final AttendanceRecord record;
+  void _updateTime() {
+    final now = DateTime.now();
+    final hh = now.hour.toString().padLeft(2, '0');
+    final mm = now.minute.toString().padLeft(2, '0');
+    final ss = now.second.toString().padLeft(2, '0');
+    if (mounted) {
+      setState(() => _time = '$hh:$mm:$ss');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final isEntry = record.type == AttendanceType.entry;
-    final color =
-        isEntry ? AppColors.success : AppColors.secondaryAccent;
-    final icon = isEntry
-        ? Icons.login_rounded
-        : Icons.logout_rounded;
-    final label = isEntry ? 'Entrada' : 'Salida';
-    final timeStr =
-        DateFormat('HH:mm').format(record.dateTime);
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-          child: Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: AppColors.glassPanel,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: AppColors.glassBorder,
-                width: 1,
-              ),
-              boxShadow: const [
-                BoxShadow(
-                  color: AppColors.glassShadow,
-                  blurRadius: 8,
-                  offset: Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                // Icon badge
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.12),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(icon, color: color, size: 18),
-                ),
-
-                const SizedBox(width: 12),
-
-                // Label
-                Expanded(
-                  child: Text(
-                    label,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w500,
-                          fontSize: 14,
-                        ),
-                  ),
-                ),
-
-                // Time
-                Text(
-                  timeStr,
-                  style: TextStyle(
-                    color: color,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+    return Text(
+      _time,
+      style: const TextStyle(
+        color: AppColors.textPrimary,
+        fontSize: 48,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 2,
       ),
     );
   }
