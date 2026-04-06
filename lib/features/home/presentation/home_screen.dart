@@ -21,6 +21,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen>
     with SingleTickerProviderStateMixin {
   bool _hasMarked = false;
+  bool _isEntryMode = true;
   late final AnimationController _pulseCtrl;
   late final Animation<double> _pulseAnim;
 
@@ -50,7 +51,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   void _resetState() {
     ref.read(attendanceActionProvider.notifier).reset();
-    setState(() => _hasMarked = false);
+    setState(() {
+       _hasMarked = false;
+       _isEntryMode = !_isEntryMode;
+    });
   }
 
   @override
@@ -368,25 +372,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AppColors.success.withOpacity(0.15),
-                        border: Border.all(
-                            color: AppColors.success.withOpacity(0.4),
-                            width: 2),
+                        color: AppColors.success,
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.success.withOpacity(0.2),
+                            color: AppColors.success.withOpacity(0.4),
                             blurRadius: 20,
                             spreadRadius: 5,
                           ),
                         ],
                       ),
                       child: const Icon(Icons.check_rounded,
-                          color: AppColors.success, size: 48),
+                          color: Colors.white, size: 48),
                     ),
                     const SizedBox(height: 24),
-                    const Text(
-                      '¡Asistencia Marcada!',
-                      style: TextStyle(
+                    Text(
+                      _isEntryMode ? '¡Entrada Registrada!' : '¡Salida Registrada!',
+                      style: const TextStyle(
                         color: AppColors.textPrimary,
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -412,9 +413,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       ),
                     ),
                     const SizedBox(height: 12),
-                    const Text(
-                      'Tu registro fue exitoso',
-                      style: TextStyle(
+                    Text(
+                      _isEntryMode
+                          ? 'Tu registro de entrada fue exitoso'
+                          : 'Tu registro de salida fue exitoso',
+                      style: const TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 14,
                       ),
