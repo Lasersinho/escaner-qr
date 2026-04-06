@@ -1,11 +1,9 @@
-import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/dio_client.dart';
 import '../../auth/presentation/auth_provider.dart';
 import '../data/attendance_repository.dart';
-import '../data/camera_capture_service.dart';
 import '../data/location_service.dart';
 import '../domain/scan_result.dart';
 
@@ -15,9 +13,6 @@ final locationServiceProvider = Provider<LocationService>(
   (ref) => LocationService(),
 );
 
-final cameraCaptureServiceProvider = Provider<CameraCaptureService>(
-  (ref) => CameraCaptureService(),
-);
 
 final attendanceRepositoryProvider = Provider<AttendanceRepository>((ref) {
   final storage = ref.watch(secureStorageProvider);
@@ -66,7 +61,6 @@ final attendanceActionProvider =
     StateNotifierProvider<AttendanceActionNotifier, AttendanceActionState>(
   (ref) => AttendanceActionNotifier(
     locationService: ref.watch(locationServiceProvider),
-    cameraCaptureService: ref.watch(cameraCaptureServiceProvider),
     repository: ref.watch(attendanceRepositoryProvider),
   ),
 );
@@ -74,15 +68,12 @@ final attendanceActionProvider =
 class AttendanceActionNotifier extends StateNotifier<AttendanceActionState> {
   AttendanceActionNotifier({
     required LocationService locationService,
-    required CameraCaptureService cameraCaptureService,
     required AttendanceRepository repository,
   })  : _locationService = locationService,
-        _cameraCaptureService = cameraCaptureService,
         _repository = repository,
         super(const AttendanceActionState());
 
   final LocationService _locationService;
-  final CameraCaptureService _cameraCaptureService;
   final AttendanceRepository _repository;
 
   /// Process scan: Securing (Dual Photos) -> Location -> API.
