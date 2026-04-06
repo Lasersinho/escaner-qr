@@ -100,7 +100,7 @@ class HomeScreen extends ConsumerWidget {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primaryAccent.withValues(alpha: 0.35),
+                    color: AppColors.primaryAccent.withOpacity(0.35),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -164,7 +164,7 @@ class HomeScreen extends ConsumerWidget {
                               ? [
                                   BoxShadow(
                                     color: AppColors.primaryAccent
-                                        .withValues(alpha: 0.25),
+                                        .withOpacity(0.25),
                                     blurRadius: 8,
                                     offset: const Offset(0, 3),
                                   )
@@ -194,7 +194,7 @@ class HomeScreen extends ConsumerWidget {
           // Calendar filter button
           Container(
             decoration: BoxDecoration(
-              color: currentFilter == AttendanceTimeFilter.custom ? AppColors.primaryAccent.withValues(alpha: 0.1) : Colors.transparent,
+              color: currentFilter == AttendanceTimeFilter.custom ? AppColors.primaryAccent.withOpacity(0.1) : Colors.transparent,
               borderRadius: BorderRadius.circular(12),
             ),
             child: IconButton(
@@ -246,7 +246,7 @@ class HomeScreen extends ConsumerWidget {
           children: [
             Icon(Icons.event_busy_rounded,
                 size: 56,
-                color: AppColors.textSecondary.withValues(alpha: 0.4)),
+                color: AppColors.textSecondary.withOpacity(0.4)),
             const SizedBox(height: 12),
             Text(
               'Sin registros en este período',
@@ -284,7 +284,7 @@ class HomeScreen extends ConsumerWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryAccent.withValues(alpha: 0.45),
+            color: AppColors.primaryAccent.withOpacity(0.45),
             blurRadius: 20,
             offset: const Offset(0, 6),
           ),
@@ -370,7 +370,7 @@ class _DaySection extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(
                     horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryAccent.withValues(alpha: 0.1),
+                  color: AppColors.primaryAccent.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
@@ -442,7 +442,7 @@ class _AttendanceCard extends StatelessWidget {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.12),
+                    color: color.withOpacity(0.12),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(icon, color: color, size: 18),

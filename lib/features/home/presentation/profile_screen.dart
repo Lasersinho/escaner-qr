@@ -121,7 +121,7 @@ class ProfileScreen extends ConsumerWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryAccent.withValues(alpha: 0.40),
+            color: AppColors.primaryAccent.withOpacity(0.40),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
@@ -226,7 +226,7 @@ class _InfoRow extends StatelessWidget {
           height: 36,
           decoration: BoxDecoration(
             color:
-                AppColors.primaryAccent.withValues(alpha: 0.10),
+                AppColors.primaryAccent.withOpacity(0.10),
             shape: BoxShape.circle,
           ),
           child: Icon(icon,

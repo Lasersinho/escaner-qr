@@ -99,9 +99,9 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                                 padding: const EdgeInsets.all(24),
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: AppColors.primaryAccent.withValues(alpha: 0.1),
+                                  color: AppColors.primaryAccent.withOpacity(0.1),
                                   border: Border.all(
-                                    color: AppColors.primaryAccent.withValues(alpha: 0.3),
+                                    color: AppColors.primaryAccent.withOpacity(0.3),
                                     width: 2,
                                   ),
                                 ),
@@ -211,7 +211,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: Container(
-            color: Colors.black.withValues(alpha: 0.4),
+            color: Colors.black.withOpacity(0.4),
             child: Center(
               child: GlassCard(
                 width: 220,
@@ -222,9 +222,9 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryAccent.withValues(alpha: 0.1),
+                        color: AppColors.primaryAccent.withOpacity(0.1),
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.primaryAccent.withValues(alpha: 0.3)),
+                        border: Border.all(color: AppColors.primaryAccent.withOpacity(0.3)),
                       ),
                       child: const SizedBox(
                         width: 40,
@@ -263,7 +263,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      barrierColor: Colors.black87.withValues(alpha: 0.6),
+      barrierColor: Colors.black87.withOpacity(0.6),
       builder: (_) => TweenAnimationBuilder<double>(
         tween: Tween(begin: 0.8, end: 1.0),
         duration: const Duration(milliseconds: 350),
@@ -283,11 +283,11 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                      padding: const EdgeInsets.all(20),
                      decoration: BoxDecoration(
                        shape: BoxShape.circle,
-                       color: AppColors.success.withValues(alpha: 0.15),
-                       border: Border.all(color: AppColors.success.withValues(alpha: 0.4), width: 2),
+                       color: AppColors.success.withOpacity(0.15),
+                       border: Border.all(color: AppColors.success.withOpacity(0.4), width: 2),
                        boxShadow: [
                          BoxShadow(
-                           color: AppColors.success.withValues(alpha: 0.2),
+                           color: AppColors.success.withOpacity(0.2),
                            blurRadius: 20,
                            spreadRadius: 5,
                          ),
@@ -310,7 +310,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                     decoration: BoxDecoration(
-                       color: AppColors.primaryAccent.withValues(alpha: 0.1),
+                       color: AppColors.primaryAccent.withOpacity(0.1),
                        borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -348,7 +348,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      barrierColor: Colors.black87.withValues(alpha: 0.6),
+      barrierColor: Colors.black87.withOpacity(0.6),
       builder: (_) => TweenAnimationBuilder<double>(
         tween: Tween(begin: 0.8, end: 1.0),
         duration: const Duration(milliseconds: 350),
@@ -368,11 +368,11 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: AppColors.error.withValues(alpha: 0.15),
-                      border: Border.all(color: AppColors.error.withValues(alpha: 0.4), width: 2),
+                      color: AppColors.error.withOpacity(0.15),
+                      border: Border.all(color: AppColors.error.withOpacity(0.4), width: 2),
                       boxShadow: [
                          BoxShadow(
-                           color: AppColors.error.withValues(alpha: 0.2),
+                           color: AppColors.error.withOpacity(0.2),
                            blurRadius: 20,
                            spreadRadius: 5,
                          ),
@@ -395,9 +395,9 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: AppColors.error.withValues(alpha: 0.05),
+                      color: AppColors.error.withOpacity(0.05),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.error.withValues(alpha: 0.1)),
+                      border: Border.all(color: AppColors.error.withOpacity(0.1)),
                     ),
                     child: Text(
                       message,

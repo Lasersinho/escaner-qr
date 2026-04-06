@@ -47,7 +47,7 @@ class _NeoButtonState extends State<NeoButton>
             end: _pressed ? Alignment.topLeft : Alignment.bottomRight,
             colors: [
               AppColors.primaryAccent,
-              AppColors.primaryAccent.withValues(alpha: 0.85),
+              AppColors.primaryAccent.withOpacity(0.85),
             ],
           ),
           borderRadius: BorderRadius.circular(AppTokens.radiusButton),
