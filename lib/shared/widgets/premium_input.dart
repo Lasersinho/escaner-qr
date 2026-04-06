@@ -27,21 +27,6 @@ class PremiumInput extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppTokens.radiusInput),
-        // Inset shadow emulating a "carved" look
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x12000000),
-            offset: Offset(2, 2),
-            blurRadius: 4,
-            spreadRadius: -1,
-          ),
-          BoxShadow(
-            color: Color(0x30FFFFFF),
-            offset: Offset(-1, -1),
-            blurRadius: 4,
-            spreadRadius: -1,
-          ),
-        ],
       ),
       child: TextField(
         controller: controller,

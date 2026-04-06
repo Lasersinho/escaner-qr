@@ -26,34 +26,12 @@ class GlassCard extends StatelessWidget {
 
     return Container(
       width: width,
+      padding: padding ?? AppTokens.paddingCard,
       decoration: BoxDecoration(
+        color: AppColors.glassPanel, // We will make this fully opaque in app_colors
         borderRadius: BorderRadius.circular(radius),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.glassShadow,
-            blurRadius: 24,
-            offset: Offset(0, 8),
-          ),
-        ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(radius),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(
-            sigmaX: AppTokens.blurSigma,
-            sigmaY: AppTokens.blurSigma,
-          ),
-          child: Container(
-            padding: padding ?? AppTokens.paddingCard,
-            decoration: BoxDecoration(
-              color: AppColors.glassPanel,
-              borderRadius: BorderRadius.circular(radius),
-              border: Border.all(color: AppColors.glassBorder, width: 1.2),
-            ),
-            child: child,
-          ),
-        ),
-      ),
+      child: child,
     );
   }
 }

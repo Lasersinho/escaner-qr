@@ -29,11 +29,11 @@ abstract final class AppColors {
   static const Color secondaryAccent = Color(0xFF818CF8);   // Indigo claro
 
   // ┌─────────────────────────────────────────────────────────────────────────┐
-  // │  CRISTAL / GLASS                                                       │
+  // │  PANELES Y TARJETAS (100% Flat)                                        │
   // └─────────────────────────────────────────────────────────────────────────┘
-  static const Color glassPanel  = Color(0x99FFFFFF);       // 60% blanco (más legible)
-  static const Color glassBorder = Color(0x4DFFFFFF);       // 30% blanco
-  static const Color glassShadow = Color(0x0D000000);       // Sombra muy sutil
+  static const Color glassPanel  = Color(0xFFFFFFFF);       // 100% blanco (totalmente opaco)
+  static const Color glassBorder = Color(0x00FFFFFF);       // Sin borde transparente
+  static const Color glassShadow = Color(0x00000000);       // Sin sombra
 
   // ┌─────────────────────────────────────────────────────────────────────────┐
   // │  TEXTO                                                                 │
