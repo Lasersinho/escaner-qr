@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/network/dio_client.dart';
-import '../domain/scan_result.dart';
 
 /// Repository that sends attendance departure records to the backend.
 class AttendanceRepository {
@@ -10,41 +9,6 @@ class AttendanceRepository {
       : _dio = dioClient.instance;
 
   final Dio _dio;
-
-  /// POST the [ScanResult] to the departure endpoint.
-  ///
-  /// Returns `true` on success, throws on failure.
-  Future<bool> markDeparture(ScanResult result) async {
-    try {
-      // Create FormData for multipart upload
-      final formData = FormData.fromMap(result.toJson());
-
-      // Append files if paths exist
-      if (result.backPhotoPath != null) {
-        formData.files.add(MapEntry(
-          'backPhoto',
-          await MultipartFile.fromFile(result.backPhotoPath!, filename: 'backPhoto.jpg'),
-        ));
-      }
-      if (result.frontPhotoPath != null) {
-        formData.files.add(MapEntry(
-          'frontPhoto',
-          await MultipartFile.fromFile(result.frontPhotoPath!, filename: 'frontPhoto.jpg'),
-        ));
-      }
-
-      final response = await _dio.post(
-        '/departure',
-        data: formData,
-      );
-      return response.statusCode == 200 || response.statusCode == 201;
-    } on DioException catch (e) {
-      throw AttendanceException(
-        e.response?.data?['message']?.toString() ??
-            'No se pudo registrar la salida. Intente de nuevo.',
-      );
-    }
-  }
 
   /// POST to the turnouts endpoint for attendance marking.
   ///

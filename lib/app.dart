@@ -9,7 +9,6 @@ import 'features/auth/presentation/auth_provider.dart';
 import 'features/auth/presentation/login_screen.dart';
 import 'features/home/presentation/home_screen.dart';
 import 'features/home/presentation/profile_screen.dart';
-import 'features/attendance/presentation/scanner_screen.dart';
 import 'core/theme/app_page_transitions.dart';
 
 /// Root application widget containing theme and router configuration.
@@ -73,13 +72,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => AppPageTransitions.slideUp(
           key: state.pageKey,
           child: const ProfileScreen(),
-        ),
-      ),
-      GoRoute(
-        path: '/scanner',
-        pageBuilder: (context, state) => AppPageTransitions.fadeScale(
-          key: state.pageKey,
-          child: const ScannerScreen(),
         ),
       ),
     ],

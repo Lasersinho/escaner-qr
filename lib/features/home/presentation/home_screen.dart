@@ -48,7 +48,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   void _markAttendance() {
     if (_hasMarked) return;
     setState(() => _hasMarked = true);
-    ref.read(attendanceActionProvider.notifier).processScan('manual_attendance', type: _isEntryMode ? 1 : 2);
+    ref.read(attendanceActionProvider.notifier).processAttendance(type: _isEntryMode ? 1 : 2);
   }
 
   void _resetState() {

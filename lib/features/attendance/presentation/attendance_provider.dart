@@ -8,7 +8,6 @@ import '../../auth/presentation/auth_provider.dart';
 import '../data/attendance_repository.dart';
 import '../data/office_repository.dart';
 import '../data/proximity_service.dart';
-import '../domain/scan_result.dart';
 
 // ── Service / Repository providers ──────────────────────────────────────────
 
@@ -42,7 +41,6 @@ class AttendanceActionState {
   const AttendanceActionState({
     this.status = AttendanceActionStatus.idle,
     this.message,
-    this.scanResult,
     this.errorMessage,
     this.formattedTime,
     this.officeName,
@@ -50,7 +48,6 @@ class AttendanceActionState {
 
   final AttendanceActionStatus status;
   final String? message;
-  final ScanResult? scanResult;
   final String? errorMessage;
   final String? formattedTime;
 
@@ -60,7 +57,6 @@ class AttendanceActionState {
   AttendanceActionState copyWith({
     AttendanceActionStatus? status,
     String? message,
-    ScanResult? scanResult,
     String? errorMessage,
     String? formattedTime,
     String? officeName,
@@ -68,7 +64,6 @@ class AttendanceActionState {
       AttendanceActionState(
         status: status ?? this.status,
         message: message ?? this.message,
-        scanResult: scanResult ?? this.scanResult,
         errorMessage: errorMessage,
         formattedTime: formattedTime ?? this.formattedTime,
         officeName: officeName ?? this.officeName,
@@ -110,8 +105,8 @@ class AttendanceActionNotifier extends StateNotifier<AttendanceActionState> {
   ///   4. Si está fuera de rango → remoto, si está dentro → oficina
   ///   5. Gestionar token de sesión en local storage
   ///   6. Registrar asistencia en el backend
-  Future<void> processScan(String qrData, {int type = 1}) async {
-    print('Starting processScan with qrData: $qrData, type: $type');
+  Future<void> processAttendance({int type = 1}) async {
+    print('Starting processAttendance, type: $type');
     // ── Estado: procesando ──
     state = state.copyWith(
       status: AttendanceActionStatus.securing,
@@ -194,7 +189,7 @@ class AttendanceActionNotifier extends StateNotifier<AttendanceActionState> {
       state = state.copyWith(
         status: AttendanceActionStatus.success,
         formattedTime: '$hh:$mm',
-        officeName: result.nearestOffice.name,
+        officeName: officeName,
       );
       print('Process completed successfully');
     } on ProximityException catch (e) {
