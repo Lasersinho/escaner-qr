@@ -37,6 +37,7 @@ dependencies:
   device_info_plus: any
   flutter_localizations:
     sdk: flutter
+  uuid: ^4.5.3
 
 dev_dependencies:
   flutter_test:

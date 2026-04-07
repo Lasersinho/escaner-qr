@@ -1,5 +1,7 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../core/network/dio_client.dart';
 import '../../auth/presentation/auth_provider.dart';
@@ -80,6 +82,7 @@ final attendanceActionProvider =
   (ref) => AttendanceActionNotifier(
     proximityService: ref.watch(proximityServiceProvider),
     repository: ref.watch(attendanceRepositoryProvider),
+    secureStorage: ref.watch(secureStorageProvider),
   ),
 );
 
@@ -87,20 +90,26 @@ class AttendanceActionNotifier extends StateNotifier<AttendanceActionState> {
   AttendanceActionNotifier({
     required ProximityService proximityService,
     required AttendanceRepository repository,
+    required FlutterSecureStorage secureStorage,
   })  : _proximityService = proximityService,
         _repository = repository,
+        _secureStorage = secureStorage,
         super(const AttendanceActionState());
 
   final ProximityService _proximityService;
   final AttendanceRepository _repository;
+  final FlutterSecureStorage _secureStorage;
+
+  static const _tokenKey = 'attendance_session_token';
 
   /// Flujo completo al presionar el FAB "+":
   ///
   ///   1. Mostrar "Obteniendo ubicación..."
   ///   2. Validar GPS con ProximityService
   ///   3. Si detecta Mock GPS → error
-  ///   4. Si está fuera de rango → error con distancia
-  ///   5. Si está dentro de rango → éxito con hora y nombre de oficina
+  ///   4. Si está fuera de rango → remoto, si está dentro → oficina
+  ///   5. Gestionar token de sesión en local storage
+  ///   6. Registrar asistencia en el backend
   Future<void> processScan(String qrData, {int type = 1}) async {
     print('Starting processScan with qrData: $qrData, type: $type');
     // ── Estado: procesando ──
@@ -117,7 +126,6 @@ class AttendanceActionNotifier extends StateNotifier<AttendanceActionState> {
       final result = await _proximityService.validateProximity();
       print('Proximity result: $result');
 
-      /*
       // ── Paso 2: Detectar ubicación falsa (Fake GPS) ──
       if (result.isMocked) {
         state = state.copyWith(
@@ -128,40 +136,61 @@ class AttendanceActionNotifier extends StateNotifier<AttendanceActionState> {
         );
         return;
       }
-      */
 
-      // ── Paso 3: Verificar que esté dentro del radio ──
+      // ── Paso 3: Verificar que esté dentro del radio o Remoto ──
+      int headquarterId;
+      String officeName;
+
       if (!result.isWithinRange) {
-        state = state.copyWith(
-          status: AttendanceActionStatus.failure,
-          errorMessage:
-              'Estás a ${result.formattedDistance} de "${result.nearestOffice.name}". '
-              'Debes estar a menos de ${result.nearestOffice.allowedRadiusMeters.toStringAsFixed(0)} m '
-              'para marcar asistencia.',
-        );
-        return;
+        headquarterId = 0; // ID designado para trabajo remoto
+        officeName = 'Trabajo Remoto';
+        // Opcional: mostrar un warning o solicitar confirmación si se desea
+        // pero por los requerimientos, simplemente se marca como remoto.
+      } else {
+        headquarterId = result.nearestOffice.id;
+        officeName = result.nearestOffice.name;
       }
 
-      // ── Paso 4: Ubicación válida → registrar asistencia ──
-      state = state.copyWith(message: 'Registrando asistencia...');
-      print('Marking attendance...');
+      // ── Paso 4: Generación/Validación de Token de Sesión ──
+      state = state.copyWith(message: 'Preparando registro de asistencia...');
+      String? token;
+
+      if (type == 1) { // Entrada
+        token = const Uuid().v4();
+        await _secureStorage.write(key: _tokenKey, value: token);
+      } else { // Salida
+        token = await _secureStorage.read(key: _tokenKey);
+        if (token == null) {
+          // Si no hay token de entrada, genera uno por contingencia y previene null
+          token = const Uuid().v4();
+        }
+      }
+
+      // ── Paso 5: Ubicación válida → registrar asistencia ──
+      state = state.copyWith(message: 'Registrando asistencia en $officeName...');
+      print('Marking attendance at $officeName, Type: $type, HH_ID: $headquarterId');
 
       // Call the API to mark attendance
       await _repository.markAttendance(
         type: type,
-        token: '48798mshjds-lkss-21-91ee-asñld2991lkj', // Hardcoded token
-        headquarter: result.nearestOffice.id,
+        token: token,
+        headquarter: headquarterId,
         latitude: result.latitude,
         longitude: result.longitude,
         timestamp: DateTime.now(),
       );
       print('Attendance marked successfully');
 
+      // ── Paso 6: Limpieza post-salida ──
+      if (type == 2) {
+        await _secureStorage.delete(key: _tokenKey);
+      }
+
       final now = DateTime.now();
       final hh = now.hour.toString().padLeft(2, '0');
       final mm = now.minute.toString().padLeft(2, '0');
 
-      // ── Paso 5: Éxito ──
+      // ── Paso 7: Éxito ──
       state = state.copyWith(
         status: AttendanceActionStatus.success,
         formattedTime: '$hh:$mm',
