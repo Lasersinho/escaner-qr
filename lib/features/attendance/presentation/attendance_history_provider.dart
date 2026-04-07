@@ -114,6 +114,7 @@ List<AttendanceRecord> _generateMockRecords() {
       dateTime: DateTime(
           day.year, day.month, day.day, 8, 5 + (idCounter % 30)),
       employeeId: 'usr_001',
+      officeName: idCounter % 5 == 0 ? 'Remoto' : 'Miraflores',
     ));
 
     records.add(AttendanceRecord(
@@ -122,6 +123,7 @@ List<AttendanceRecord> _generateMockRecords() {
       dateTime: DateTime(
           day.year, day.month, day.day, 17, 30 + (idCounter % 20)),
       employeeId: 'usr_001',
+      officeName: idCounter % 5 == 0 ? 'Remoto' : 'Miraflores',
     ));
   }
 

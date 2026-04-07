@@ -1,8 +1,8 @@
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/glass_card.dart';
@@ -12,7 +12,6 @@ import '../../attendance/presentation/attendance_history_provider.dart';
 import '../../attendance/presentation/attendance_provider.dart';
 import '../../auth/presentation/auth_provider.dart';
 
-/// Pantalla principal ultra-rápida: Login → Botón → Éxito.
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -22,19 +21,18 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen>
     with SingleTickerProviderStateMixin {
-  bool _hasMarked = false;
-  bool _isEntryMode = true;
   late final AnimationController _pulseCtrl;
   late final Animation<double> _pulseAnim;
+  bool _isProcessing = false;
 
   @override
   void initState() {
     super.initState();
     _pulseCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1800),
+      duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
-    _pulseAnim = Tween<double>(begin: 1.0, end: 1.06).animate(
+    _pulseAnim = Tween<double>(begin: 1.0, end: 1.1).animate(
       CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
     );
   }
@@ -46,41 +44,50 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   void _markAttendance() {
-    if (_hasMarked) return;
-    setState(() => _hasMarked = true);
-    ref.read(attendanceActionProvider.notifier).processAttendance(type: _isEntryMode ? 1 : 2);
+    if (_isProcessing) return;
+    setState(() => _isProcessing = true);
+
+    // Determine type based on the last record if available, or default to entry
+    final history = ref.read(attendanceHistoryProvider).allRecords;
+    final lastType = history.isNotEmpty ? history.first.type : AttendanceType.exit;
+    final nextType = lastType == AttendanceType.entry ? 2 : 1;
+
+    ref.read(attendanceActionProvider.notifier).processAttendance(type: nextType);
   }
 
-  void _resetState() {
-    ref.read(attendanceActionProvider.notifier).reset();
-    setState(() {
-       _hasMarked = false;
-       _isEntryMode = !_isEntryMode;
-    });
+  void _handleSuccess(AttendanceActionState state) {
+    final user = ref.read(authProvider).user;
+    final now = DateTime.now();
+
+    // Add to history list immediately
+    ref.read(attendanceHistoryProvider.notifier).addRecord(
+          AttendanceRecord(
+            id: 'now_${now.millisecondsSinceEpoch}',
+            type: state.message?.contains('salida') == true
+                ? AttendanceType.exit
+                : AttendanceType.entry,
+            dateTime: now,
+            employeeId: user?.id ?? 'usr_001',
+            officeName: state.officeName,
+          ),
+        );
+
+    _showSuccessDialog(state.formattedTime ?? '--:--', state.officeName ?? 'Sede');
   }
 
   @override
   Widget build(BuildContext context) {
+    final historyState = ref.watch(attendanceHistoryProvider);
     final actionState = ref.watch(attendanceActionProvider);
     final user = ref.watch(authProvider).user;
-    final greeting = _buildGreeting(user?.name ?? 'Usuario');
 
-    // Escuchar cambios de estado → popups
+    // Listen to success/failure
     ref.listen<AttendanceActionState>(attendanceActionProvider, (prev, next) {
       if (next.status == AttendanceActionStatus.success) {
-        _showSuccessDialog(next.formattedTime ?? '--:--');
-        
-        // Insert record in history if available (optional but good)
-        final now = DateTime.now();
-        ref.read(attendanceHistoryProvider.notifier).addRecord(
-          AttendanceRecord(
-            id: 'mock_${now.millisecondsSinceEpoch}',
-            type: _isEntryMode ? AttendanceType.entry : AttendanceType.exit,
-            dateTime: now,
-            employeeId: user?.id ?? 'usr_001',
-          ),
-        );
+        setState(() => _isProcessing = false);
+        _handleSuccess(next);
       } else if (next.status == AttendanceActionStatus.failure) {
+        setState(() => _isProcessing = false);
         _showErrorDialog(next.errorMessage ?? 'Error desconocido');
       }
     });
@@ -89,148 +96,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       backgroundColor: AppColors.backgroundStart,
       body: Stack(
         children: [
-          // ── Background gradient ──
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFFF0FAFB), Color(0xFFFBFBFC)],
-              ),
-            ),
+          CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              _buildAppBar(context, user?.name ?? 'Usuario'),
+              _buildFilterSection(historyState),
+              _buildHistoryList(historyState),
+              const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
+            ],
           ),
 
-          SafeArea(
-            child: Column(
-              children: [
-                _buildTopBar(context, user?.name ?? 'Usuario'),
-                Expanded(
-                  child: Center(
-                    child: SingleChildScrollView(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // ── Greeting ──
-                            Text(
-                              greeting,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            // ── Live clock ──
-                            const _LiveClock(),
-                            const SizedBox(height: 48),
-
-                            // ── Big Pulse Button ──
-                            AnimatedBuilder(
-                              animation: _pulseAnim,
-                              builder: (context, child) {
-                                return Transform.scale(
-                                  scale: _hasMarked ? 1.0 : _pulseAnim.value,
-                                  child: child,
-                                );
-                              },
-                              child: GestureDetector(
-                                onTap: _hasMarked ? null : _markAttendance,
-                                child: Container(
-                                  width: 200,
-                                  height: 200,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: _hasMarked
-                                          ? [
-                                              AppColors.textSecondary
-                                                  .withOpacity(0.3),
-                                              AppColors.textSecondary
-                                                  .withOpacity(0.2),
-                                            ]
-                                          : [
-                                              AppColors.primaryAccent,
-                                              const Color(0xFF00A8AE),
-                                            ],
-                                    ),
-                                    boxShadow: _hasMarked
-                                        ? []
-                                        : [
-                                            BoxShadow(
-                                              color: AppColors.primaryAccent
-                                                  .withOpacity(0.4),
-                                              blurRadius: 40,
-                                              spreadRadius: 8,
-                                              offset: const Offset(0, 8),
-                                            ),
-                                            BoxShadow(
-                                              color: AppColors.primaryAccent
-                                                  .withOpacity(0.15),
-                                              blurRadius: 80,
-                                              spreadRadius: 20,
-                                            ),
-                                          ],
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.touch_app_rounded,
-                                        color: _hasMarked
-                                            ? Colors.white54
-                                            : Colors.white,
-                                        size: 56,
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        'MARCAR',
-                                        style: TextStyle(
-                                          color: _hasMarked
-                                              ? Colors.white54
-                                              : Colors.white,
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w800,
-                                          letterSpacing: 2,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                            const SizedBox(height: 32),
-
-                            // ── Instruction text ──
-                            Text(
-                              _hasMarked
-                                  ? 'Procesando tu asistencia...'
-                                  : 'Pulsa para registrar tu ${_isEntryMode ? "entrada" : "salida"}',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 15,
-                                fontWeight:
-                                    _hasMarked ? FontWeight.w500 : FontWeight.w400,
-                                height: 1.4,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+          // Floating Action Button with Pulse
+          Positioned(
+            bottom: 24,
+            right: 24,
+            child: _buildFAB(),
           ),
 
-          // ── Processing overlay ──
           if (actionState.status == AttendanceActionStatus.securing)
             _buildProcessingOverlay(actionState.message ?? 'Procesando...'),
         ],
@@ -238,62 +120,197 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
-  // ── Top Bar ─────────────────────────────────────────────────────────────
-
-  Widget _buildTopBar(BuildContext context, String name) {
-    final initials = _getInitials(name);
-
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
-        children: [
-          // Logo / Title
-          const Expanded(
-            child: Text(
-              'Pulse',
-              style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-                letterSpacing: -0.5,
+  Widget _buildAppBar(BuildContext context, String userName) {
+    return SliverAppBar(
+      expandedHeight: 120,
+      floating: true,
+      pinned: true,
+      backgroundColor: AppColors.backgroundStart,
+      elevation: 0,
+      centerTitle: false,
+      flexibleSpace: FlexibleSpaceBar(
+        titlePadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        centerTitle: false,
+        title: const Text(
+          'Historial',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w800,
+            fontSize: 24,
+            letterSpacing: -0.5,
+          ),
+        ),
+      ),
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: 24),
+          child: GestureDetector(
+            onTap: () => context.push('/profile'),
+            child: CircleAvatar(
+              radius: 20,
+              backgroundColor: AppColors.primaryAccent.withOpacity(0.1),
+              child: Text(
+                userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
+                style: const TextStyle(
+                  color: AppColors.primaryAccent,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
+        ),
+      ],
+    );
+  }
 
-          // Profile avatar
-          GestureDetector(
-            onTap: () => context.push('/profile'),
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColors.primaryAccent,
-                    AppColors.secondaryAccent,
-                  ],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primaryAccent.withOpacity(0.35),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
+  Widget _buildFilterSection(AttendanceHistoryState state) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Row(
+            children: AttendanceTimeFilter.values.map((filter) {
+              final isSelected = state.filter == filter;
+              return Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: FilterChip(
+                  label: Text(filter == AttendanceTimeFilter.today ? 'Hoy' : 
+                             filter == AttendanceTimeFilter.week ? 'Semana' :
+                             filter == AttendanceTimeFilter.month ? 'Mes' : 'Fecha'),
+                  selected: isSelected,
+                  onSelected: (_) {
+                    if (filter == AttendanceTimeFilter.custom) {
+                      _selectCustomDateRange();
+                    } else {
+                      ref.read(attendanceHistoryProvider.notifier).setFilter(filter);
+                    }
+                  },
+                  backgroundColor: Colors.white,
+                  selectedColor: AppColors.primaryAccent,
+                  labelStyle: TextStyle(
+                    color: isSelected ? Colors.white : AppColors.textSecondary,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                   ),
-                ],
-              ),
-              child: Center(
+                  elevation: 0,
+                  pressElevation: 0,
+                  side: BorderSide(
+                    color: isSelected ? Colors.transparent : AppColors.primaryAccent.withOpacity(0.1),
+                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHistoryList(AttendanceHistoryState state) {
+    final grouped = state.groupedByDay;
+    if (grouped.isEmpty) {
+      return const SliverFillRemaining(
+        child: Center(
+          child: Text('No hay registros en este periodo', style: TextStyle(color: AppColors.textSecondary)),
+        ),
+      );
+    }
+
+    final dayKeys = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
+
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          final date = dayKeys[index];
+          final records = grouped[date]!;
+          final isToday = DateUtils.isSameDay(date, DateTime.now());
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
                 child: Text(
-                  initials,
+                  isToday ? 'Hoy' : DateFormat('EEEE, d MMMM', 'es_ES').format(date),
                   style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
+                    color: AppColors.textSecondary,
+                    fontSize: 14,
                     fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
                   ),
                 ),
               ),
+              ...records.map((r) => _buildHistoryCard(r)),
+            ],
+          );
+        },
+        childCount: dayKeys.length,
+      ),
+    );
+  }
+
+  Widget _buildHistoryCard(AttendanceRecord record) {
+    final isEntry = record.type == AttendanceType.entry;
+    final timeStr = DateFormat('hh:mm a').format(record.dateTime);
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: (isEntry ? AppColors.success : AppColors.secondaryAccent).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(
+              isEntry ? Icons.login_rounded : Icons.logout_rounded,
+              color: isEntry ? AppColors.success : AppColors.secondaryAccent,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isEntry ? 'Entrada' : 'Salida',
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                Text(
+                  record.officeName ?? 'Ubicación desconocida',
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            timeStr,
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w700,
+              fontSize: 15,
             ),
           ),
         ],
@@ -301,56 +318,40 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
-  // ── Processing overlay ──────────────────────────────────────────────────
-
-  Widget _buildProcessingOverlay(String message) {
-    return Positioned.fill(
-      child: ClipRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Container(
-            color: Colors.black.withOpacity(0.4),
-            child: Center(
-              child: GlassCard(
-                width: 220,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryAccent.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                            color: AppColors.primaryAccent.withOpacity(0.3)),
-                      ),
-                      child: const SizedBox(
-                        width: 40,
-                        height: 40,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 4,
-                          strokeCap: StrokeCap.round,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                              AppColors.primaryAccent),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Text(
-                      message,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
-                ),
+  Widget _buildFAB() {
+    return AnimatedBuilder(
+      animation: _pulseAnim,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _isProcessing ? 1.0 : _pulseAnim.value,
+          child: child,
+        );
+      },
+      child: GestureDetector(
+        onTap: _markAttendance,
+        child: Container(
+          width: 72,
+          height: 72,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [AppColors.fabGradientStart, AppColors.fabGradientEnd],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primaryAccent.withOpacity(0.4),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
               ),
+            ],
+          ),
+          child: const Center(
+            child: Icon(
+              Icons.touch_app_rounded,
+              color: Colors.white,
+              size: 36,
             ),
           ),
         ),
@@ -358,97 +359,49 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
-  // ── Dialogs ─────────────────────────────────────────────────────────────
+  Future<void> _selectCustomDateRange() async {
+    final range = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.primaryAccent,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (range != null) {
+      ref.read(attendanceHistoryProvider.notifier).setCustomDateRange(range);
+    }
+  }
 
-  void _showSuccessDialog(String time) {
+  void _showSuccessDialog(String time, String office) {
     showDialog(
       context: context,
-      barrierDismissible: false,
-      barrierColor: Colors.black87.withOpacity(0.6),
-      builder: (_) => TweenAnimationBuilder<double>(
-        tween: Tween(begin: 0.8, end: 1.0),
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeOutBack,
-        builder: (context, scale, child) => Transform.scale(
-          scale: scale,
-          child: Material(
-            type: MaterialType.transparency,
-            child: Center(
-              child: GlassCard(
-                width: 320,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColors.success,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.success.withOpacity(0.4),
-                            blurRadius: 20,
-                            spreadRadius: 5,
-                          ),
-                        ],
-                      ),
-                      child: const Icon(Icons.check_rounded,
-                          color: Colors.white, size: 48),
-                    ),
-                    const SizedBox(height: 24),
-                    Text(
-                      _isEntryMode ? '¡Entrada Registrada!' : '¡Salida Registrada!',
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryAccent.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        time,
-                        style: const TextStyle(
-                          color: AppColors.primaryAccent,
-                          fontSize: 36,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      _isEntryMode
-                          ? 'Tu registro de entrada fue exitoso'
-                          : 'Tu registro de salida fue exitoso',
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    SizedBox(
-                      width: double.infinity,
-                      child: NeoButton(
-                        label: 'Aceptar',
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                          _resetState();
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+      barrierDismissible: true,
+      builder: (_) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Center(
+          child: GlassCard(
+            width: 300,
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 64),
+                const SizedBox(height: 16),
+                const Text('¡Hecho!', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Text('Marcación registrada a las $time', textAlign: TextAlign.center),
+                Text('en $office', style: const TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 24),
+                NeoButton(label: 'Cerrar', onPressed: () => Navigator.pop(context)),
+              ],
             ),
           ),
         ),
@@ -459,165 +412,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
-      barrierDismissible: false,
-      barrierColor: Colors.black87.withOpacity(0.6),
-      builder: (_) => TweenAnimationBuilder<double>(
-        tween: Tween(begin: 0.8, end: 1.0),
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeOutBack,
-        builder: (context, scale, child) => Transform.scale(
-          scale: scale,
-          child: Material(
-            type: MaterialType.transparency,
-            child: Center(
-              child: GlassCard(
-                width: 320,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColors.error.withOpacity(0.15),
-                        border: Border.all(
-                            color: AppColors.error.withOpacity(0.4),
-                            width: 2),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.error.withOpacity(0.2),
-                            blurRadius: 20,
-                            spreadRadius: 5,
-                          ),
-                        ],
-                      ),
-                      child: const Icon(Icons.close_rounded,
-                          color: AppColors.error, size: 48),
-                    ),
-                    const SizedBox(height: 24),
-                    const Text(
-                      'Error al Registrar',
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppColors.error.withOpacity(0.05),
-                        borderRadius: BorderRadius.circular(16),
-                        border:
-                            Border.all(color: AppColors.error.withOpacity(0.1)),
-                      ),
-                      child: Text(
-                        message,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 15,
-                          height: 1.4,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    SizedBox(
-                      width: double.infinity,
-                      child: NeoButton(
-                        label: 'Reintentar',
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                          ref.read(attendanceActionProvider.notifier).reset();
-                          setState(() => _hasMarked = false);
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
+      builder: (_) => AlertDialog(
+        title: const Text('Error'),
+        content: Text(message),
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
       ),
     );
   }
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
-
-  String _buildGreeting(String name) {
-    final hour = DateTime.now().hour;
-    final firstName = name.split(' ').first;
-    if (hour < 12) return 'Buenos días, $firstName';
-    if (hour < 18) return 'Buenas tardes, $firstName';
-    return 'Buenas noches, $firstName';
-  }
-
-  String _getInitials(String name) {
-    final parts = name.trim().split(RegExp(r'[\s._@]+'));
-    if (parts.length >= 2) {
-      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    }
-    if (parts.isNotEmpty && parts[0].isNotEmpty) {
-      return parts[0][0].toUpperCase();
-    }
-    return 'U';
-  }
-}
-
-// ── Live Clock Widget ──────────────────────────────────────────────────────
-
-class _LiveClock extends StatefulWidget {
-  const _LiveClock();
-
-  @override
-  State<_LiveClock> createState() => _LiveClockState();
-}
-
-class _LiveClockState extends State<_LiveClock> {
-  late String _time;
-
-  @override
-  void initState() {
-    super.initState();
-    _updateTime();
-    // Update every second
-    _startClock();
-  }
-
-  void _startClock() async {
-    while (mounted) {
-      await Future.delayed(const Duration(seconds: 1));
-      if (mounted) {
-        _updateTime();
-      }
-    }
-  }
-
-  void _updateTime() {
-    final now = DateTime.now();
-    final hh = now.hour.toString().padLeft(2, '0');
-    final mm = now.minute.toString().padLeft(2, '0');
-    final ss = now.second.toString().padLeft(2, '0');
-    if (mounted) {
-      setState(() => _time = '$hh:$mm:$ss');
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      _time,
-      style: const TextStyle(
-        color: AppColors.textPrimary,
-        fontSize: 48,
-        fontWeight: FontWeight.w800,
-        letterSpacing: 2,
+  Widget _buildProcessingOverlay(String message) {
+    return Container(
+      color: Colors.black.withOpacity(0.5),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(color: Colors.white),
+            const SizedBox(height: 16),
+            Text(message, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ],
+        ),
       ),
     );
   }
