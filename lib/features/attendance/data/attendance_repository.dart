@@ -33,10 +33,17 @@ class AttendanceRepository {
         'timestamp': formattedTimestamp,
       };
 
+      print('[DEBUG] AttendanceRepository: POST /turnouts');
+      print('[DEBUG] AttendanceRepository: Body: $data');
+
       final response = await _dio.post(
         '/turnouts',
         data: data,
       );
+      
+      print('[DEBUG] AttendanceRepository: Response Status: ${response.statusCode}');
+      print('[DEBUG] AttendanceRepository: Response Data: ${response.data}');
+
       return response.statusCode == 200 || response.statusCode == 201;
     } on DioException catch (e) {
       String errorMessage = 'No se pudo registrar la asistencia. Intente de nuevo.';

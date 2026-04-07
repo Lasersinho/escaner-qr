@@ -44,6 +44,7 @@ class AttendanceActionState {
     this.errorMessage,
     this.formattedTime,
     this.officeName,
+    this.type,
   });
 
   final AttendanceActionStatus status;
@@ -51,8 +52,11 @@ class AttendanceActionState {
   final String? errorMessage;
   final String? formattedTime;
 
-  /// Nombre de la oficina donde se marcó (para mostrar en el popup).
+  /// Nombre de la oficina donde se cambió (para mostrar en el popup).
   final String? officeName;
+  
+  /// El tipo de marcación (1 = Entrada, 2 = Salida)
+  final int? type;
 
   AttendanceActionState copyWith({
     AttendanceActionStatus? status,
@@ -60,6 +64,7 @@ class AttendanceActionState {
     String? errorMessage,
     String? formattedTime,
     String? officeName,
+    int? type,
   }) =>
       AttendanceActionState(
         status: status ?? this.status,
@@ -67,6 +72,7 @@ class AttendanceActionState {
         errorMessage: errorMessage,
         formattedTime: formattedTime ?? this.formattedTime,
         officeName: officeName ?? this.officeName,
+        type: type ?? this.type,
       );
 }
 
@@ -152,21 +158,25 @@ class AttendanceActionNotifier extends StateNotifier<AttendanceActionState> {
 
       if (type == 1) { // Entrada
         token = const Uuid().v4();
+        print('[DEBUG] processAttendance: Generating new token for Entry: $token');
         await _secureStorage.write(key: _tokenKey, value: token);
       } else { // Salida
         token = await _secureStorage.read(key: _tokenKey);
+        print('[DEBUG] processAttendance: Retrieved token for Exit: $token');
         if (token == null) {
+          print('[DEBUG] processAttendance: WARNING: No token found for Exit. Generating a contingency token.');
           // Si no hay token de entrada, genera uno por contingencia y previene null
           token = const Uuid().v4();
+          print('[DEBUG] processAttendance: Contingency token: $token');
         }
       }
 
       // ── Paso 5: Ubicación válida → registrar asistencia ──
       state = state.copyWith(message: 'Registrando asistencia en $officeName...');
-      print('Marking attendance at $officeName, Type: $type, HH_ID: $headquarterId');
+      print('[DEBUG] processAttendance: Calling repository.markAttendance(type: $type, headquarter: $headquarterId)');
 
       // Call the API to mark attendance
-      await _repository.markAttendance(
+      final success = await _repository.markAttendance(
         type: type,
         token: token,
         headquarter: headquarterId,
@@ -174,10 +184,11 @@ class AttendanceActionNotifier extends StateNotifier<AttendanceActionState> {
         longitude: result.longitude,
         timestamp: DateTime.now(),
       );
-      print('Attendance marked successfully');
+      print('[DEBUG] processAttendance: Repository returned success: $success');
 
       // ── Paso 6: Limpieza post-salida ──
       if (type == 2) {
+        print('[DEBUG] processAttendance: Deleting token from storage after successful Exit.');
         await _secureStorage.delete(key: _tokenKey);
       }
 
@@ -190,10 +201,17 @@ class AttendanceActionNotifier extends StateNotifier<AttendanceActionState> {
         status: AttendanceActionStatus.success,
         formattedTime: '$hh:$mm',
         officeName: officeName,
+        type: type,
       );
       print('Process completed successfully');
     } on ProximityException catch (e) {
       print('ProximityException: $e');
+      state = state.copyWith(
+        status: AttendanceActionStatus.failure,
+        errorMessage: e.message,
+      );
+    } on AttendanceException catch (e) {
+      print('AttendanceException: $e');
       state = state.copyWith(
         status: AttendanceActionStatus.failure,
         errorMessage: e.message,

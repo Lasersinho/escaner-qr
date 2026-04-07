@@ -46,24 +46,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     setState(() => _isProcessing = true);
 
     // Determine type based on the last record if available, or default to entry
-    final history = ref.read(attendanceHistoryProvider).allRecords;
+    // Use filteredRecords because it is sorted descending (the first is the last recorded)
+    final history = ref.read(attendanceHistoryProvider).filteredRecords;
     final lastType = history.isNotEmpty ? history.first.type : AttendanceType.exit;
     final nextType = lastType == AttendanceType.entry ? 2 : 1;
+
+    print('[DEBUG] _markAttendance: history.length=${history.length}');
+    if (history.isNotEmpty) {
+      print('[DEBUG] _markAttendance: lastType=${history.first.type}');
+    }
+    print('[DEBUG] _markAttendance: nextType=$nextType');
 
     ref.read(attendanceActionProvider.notifier).processAttendance(type: nextType);
   }
 
   void _handleSuccess(AttendanceActionState state) {
+    print('[DEBUG] _handleSuccess: status=${state.status}, type=${state.type}');
     final user = ref.read(authProvider).user;
     final now = DateTime.now();
 
     // Add to history list immediately
+    final typeToAdd = state.type == 2 ? AttendanceType.exit : AttendanceType.entry;
+    print('[DEBUG] _handleSuccess: adding record of type $typeToAdd to local history');
+
     ref.read(attendanceHistoryProvider.notifier).addRecord(
           AttendanceRecord(
             id: 'now_${now.millisecondsSinceEpoch}',
-            type: state.message?.contains('salida') == true
-                ? AttendanceType.exit
-                : AttendanceType.entry,
+            type: typeToAdd,
             dateTime: now,
             employeeId: user?.id ?? 'usr_001',
             officeName: state.officeName,
