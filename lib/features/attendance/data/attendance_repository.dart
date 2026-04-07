@@ -39,10 +39,15 @@ class AttendanceRepository {
       );
       return response.statusCode == 200 || response.statusCode == 201;
     } on DioException catch (e) {
-      throw AttendanceException(
-        e.response?.data?['message']?.toString() ??
-            'No se pudo registrar la asistencia. Intente de nuevo.',
-      );
+      String errorMessage = 'No se pudo registrar la asistencia. Intente de nuevo.';
+      final data = e.response?.data;
+      if (data is Map<String, dynamic>) {
+        errorMessage = data['message']?.toString() ?? errorMessage;
+      } else if (data is String && data.isNotEmpty) {
+        errorMessage = data;
+      }
+      
+      throw AttendanceException(errorMessage);
     }
   }
 }

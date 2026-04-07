@@ -100,7 +100,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             physics: const BouncingScrollPhysics(),
             slivers: [
               _buildAppBar(context, user?.name ?? 'Usuario'),
-              _buildFilterSection(historyState),
               _buildHistoryList(historyState),
               const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
             ],
@@ -110,7 +109,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           Positioned(
             bottom: 24,
             right: 24,
-            child: _buildFAB(),
+            child: _buildFAB(
+              historyState.allRecords.isEmpty || 
+              historyState.allRecords.first.type == AttendanceType.exit
+            ),
           ),
 
           if (actionState.status == AttendanceActionStatus.securing)
@@ -131,23 +133,55 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       flexibleSpace: FlexibleSpaceBar(
         titlePadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         centerTitle: false,
-        title: const Text(
-          'Historial',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w800,
-            fontSize: 24,
-            letterSpacing: -0.5,
-          ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Historial',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w800,
+                fontSize: 24,
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Tus marcaciones recientes',
+              style: TextStyle(
+                color: AppColors.textSecondary.withOpacity(0.8),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
       ),
       actions: [
+        PopupMenuButton<AttendanceTimeFilter>(
+          icon: const Icon(Icons.filter_list_rounded, color: AppColors.primaryAccent),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          onSelected: (filter) {
+            if (filter == AttendanceTimeFilter.custom) {
+              _selectCustomDateRange();
+            } else {
+              ref.read(attendanceHistoryProvider.notifier).setFilter(filter);
+            }
+          },
+          itemBuilder: (context) => [
+            const PopupMenuItem(value: AttendanceTimeFilter.today, child: Text('Hoy')),
+            const PopupMenuItem(value: AttendanceTimeFilter.week, child: Text('Esta Semana')),
+            const PopupMenuItem(value: AttendanceTimeFilter.month, child: Text('Este Mes')),
+            const PopupMenuItem(value: AttendanceTimeFilter.custom, child: Text('Fechas Específicas')),
+          ],
+        ),
+        const SizedBox(width: 8),
         Padding(
           padding: const EdgeInsets.only(right: 24),
           child: GestureDetector(
             onTap: () => context.push('/profile'),
             child: CircleAvatar(
-              radius: 20,
+              radius: 18,
               backgroundColor: AppColors.primaryAccent.withOpacity(0.1),
               child: Text(
                 userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
@@ -163,50 +197,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
-  Widget _buildFilterSection(AttendanceHistoryState state) {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Row(
-            children: AttendanceTimeFilter.values.map((filter) {
-              final isSelected = state.filter == filter;
-              return Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: FilterChip(
-                  label: Text(filter == AttendanceTimeFilter.today ? 'Hoy' : 
-                             filter == AttendanceTimeFilter.week ? 'Semana' :
-                             filter == AttendanceTimeFilter.month ? 'Mes' : 'Fecha'),
-                  selected: isSelected,
-                  onSelected: (_) {
-                    if (filter == AttendanceTimeFilter.custom) {
-                      _selectCustomDateRange();
-                    } else {
-                      ref.read(attendanceHistoryProvider.notifier).setFilter(filter);
-                    }
-                  },
-                  backgroundColor: Colors.white,
-                  selectedColor: AppColors.primaryAccent,
-                  labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : AppColors.textSecondary,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                  ),
-                  elevation: 0,
-                  pressElevation: 0,
-                  side: BorderSide(
-                    color: isSelected ? Colors.transparent : AppColors.primaryAccent.withOpacity(0.1),
-                  ),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-      ),
-    );
-  }
+  // Removed _buildFilterSection as it was moved to AppBar
 
   Widget _buildHistoryList(AttendanceHistoryState state) {
     final grouped = state.groupedByDay;
@@ -318,44 +309,73 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
-  Widget _buildFAB() {
-    return AnimatedBuilder(
-      animation: _pulseAnim,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: _isProcessing ? 1.0 : _pulseAnim.value,
-          child: child,
-        );
-      },
-      child: GestureDetector(
-        onTap: _markAttendance,
-        child: Container(
-          width: 72,
-          height: 72,
+  Widget _buildFAB(bool isNextEntry) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [AppColors.fabGradientStart, AppColors.fabGradientEnd],
-            ),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primaryAccent.withOpacity(0.4),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
-          child: const Center(
-            child: Icon(
-              Icons.touch_app_rounded,
-              color: Colors.white,
-              size: 36,
+          child: Text(
+            isNextEntry ? 'Marcar Entrada' : 'Marcar Salida',
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
             ),
           ),
         ),
-      ),
+        const SizedBox(height: 12),
+        AnimatedBuilder(
+          animation: _pulseAnim,
+          builder: (context, child) {
+            return Transform.scale(
+              scale: _isProcessing ? 1.0 : _pulseAnim.value,
+              child: child,
+            );
+          },
+          child: GestureDetector(
+            onTap: _markAttendance,
+            child: Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [AppColors.fabGradientStart, AppColors.fabGradientEnd],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primaryAccent.withOpacity(0.4),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: const Center(
+                child: Icon(
+                  Icons.touch_app_rounded,
+                  color: Colors.white,
+                  size: 32,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
