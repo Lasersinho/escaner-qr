@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../../core/network/dio_client.dart';
 import '../domain/user.dart';
+import '../../attendance/data/device_identity_service.dart';
 
 /// Repository handling authentication logic.
 class AuthRepository {
@@ -27,11 +28,16 @@ class AuthRepository {
   }) async {
     try {
       print('Logging in with email: $email');
+
+      final deviceId = await DeviceIdentityService().getDeviceIdentifier();
+      print('Device identifier for login: $deviceId');
+
       final response = await _dio.post(
         'https://context.friomamut.pe/token',
         data: {
           'username': email,
           'password': password,
+          'device': deviceId,
         },
       );
       print('Login response: ${response.data}');
