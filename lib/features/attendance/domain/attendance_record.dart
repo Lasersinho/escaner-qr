@@ -9,6 +9,7 @@ class AttendanceRecord {
     required this.dateTime,
     required this.employeeId,
     this.officeName,
+    this.token,
   });
 
   final String id;
@@ -16,6 +17,7 @@ class AttendanceRecord {
   final DateTime dateTime;
   final String employeeId;
   final String? officeName;
+  final String? token;
 
   factory AttendanceRecord.fromJson(Map<String, dynamic> json) {
     return AttendanceRecord(
@@ -23,7 +25,8 @@ class AttendanceRecord {
       type: json['Type'] == 1 ? AttendanceType.entry : AttendanceType.exit,
       dateTime: DateTime.parse(json['Timestamp'] as String),
       employeeId: json['Collaborator'] as String? ?? 'Unknown',
-      officeName: json['HeadquarterName'] as String?,
+      officeName: json['Description'] as String?,
+      token: json['Token'] as String?,
     );
   }
 }

@@ -139,10 +139,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
                       // ── Email ──
                       PremiumInput(
-                        hint: 'Correo electrónico',
+                        hint: 'DNI',
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
-                        prefixIcon: Icons.email_outlined,
+                        prefixIcon: Icons.person_outline,
                         textInputAction: TextInputAction.next,
                       ),
 

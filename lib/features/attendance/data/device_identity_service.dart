@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:android_id/android_id.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:uuid/uuid.dart';
@@ -35,10 +36,11 @@ class DeviceIdentityService {
   }
 
   /// Extrae rigurosamente la huella del Hardware actual.
-  /// Si no existe UUID persistido, lo genera, lo guarda y lo devuelve.
+  /// Si existe un identificador de dispositivo estable, derive un UUID consistente
+  /// y úselo como el ID único del teléfono incluso después de reinstalar.
   Future<String> getDeviceIdentifier() async {
-    // Optimización O(1): Retorno inmediato sin ir a las API nativas si ya tenemos el dato
     if (_cachedDeviceId != null && _cachedDeviceId!.isNotEmpty) {
+      print('DeviceIdentityService: using cached device id=$_cachedDeviceId');
       return _cachedDeviceId!;
     }
 
@@ -46,43 +48,55 @@ class DeviceIdentityService {
       final storedUuid = await _secureStorage.read(key: _deviceUuidKey);
       if (storedUuid != null && storedUuid.isNotEmpty) {
         _cachedDeviceId = storedUuid;
+        print('DeviceIdentityService: recovered persisted uuid=$_cachedDeviceId');
         return _cachedDeviceId!;
       }
 
-      // Intentamos obtener un identificador de hardware para auditoría/diagnóstico,
-      // pero la fuente segura principal para login será un UUID persistido.
-      String? hardwareId;
-      final deviceInfo = DeviceInfoPlugin();
-
-      if (Platform.isAndroid) {
-        final androidInfo = await deviceInfo.androidInfo;
-        hardwareId = androidInfo.id;
-      } else if (Platform.isIOS) {
-        final iosInfo = await deviceInfo.iosInfo;
-        hardwareId = iosInfo.identifierForVendor;
-      }
-
-      if (hardwareId == null || hardwareId.trim().isEmpty) {
-        hardwareId = null;
+      final stableDeviceId = await _getStableDeviceId();
+      if (stableDeviceId != null && stableDeviceId.isNotEmpty) {
+        final derivedUuid = _deriveUuidFromDeviceId(stableDeviceId);
+        await _secureStorage.write(key: _deviceUuidKey, value: derivedUuid);
+        _cachedDeviceId = derivedUuid;
+        print('DeviceIdentityService: derived uuid=$_cachedDeviceId from stableDeviceId=$stableDeviceId');
+        return _cachedDeviceId!;
       }
 
       final generatedUuid = const Uuid().v4();
       await _secureStorage.write(key: _deviceUuidKey, value: generatedUuid);
       _cachedDeviceId = generatedUuid;
-
-      if (hardwareId != null) {
-        print('DeviceIdentityService: hardwareId=$hardwareId persisted uuid=$_cachedDeviceId');
-      } else {
-        print('DeviceIdentityService: no hardwareId available, generated uuid=$_cachedDeviceId');
-      }
-
+      print('DeviceIdentityService: no stable device id available, generated uuid=$_cachedDeviceId');
       return _cachedDeviceId!;
     } on DeviceIdentityException {
       rethrow;
     } catch (e) {
-      throw DeviceIdentityException(
-        'Quiebre de Seguridad en extracción nativa o persistencia: ${e.toString()}',
-      );
+      final msg = 'Quiebre de Seguridad en extracción nativa o persistencia: ${e.toString()}';
+      print('DeviceIdentityService ERROR: $msg');
+      throw DeviceIdentityException(msg);
     }
+  }
+
+  Future<String?> _getStableDeviceId() async {
+    try {
+      if (Platform.isAndroid) {
+        final androidId = await const AndroidId().getId();
+        print('DeviceIdentityService: android_id=$androidId');
+        return androidId;
+      } else if (Platform.isIOS) {
+        final deviceInfo = DeviceInfoPlugin();
+        final iosInfo = await deviceInfo.iosInfo;
+        final stableId = iosInfo.identifierForVendor;
+        print('DeviceIdentityService: ios stable id=$stableId');
+        return stableId;
+      }
+      print('DeviceIdentityService: no stable device id available for platform');
+      return null;
+    } catch (e) {
+      print('DeviceIdentityService: failed to read stable device id: ${e.toString()}');
+      return null;
+    }
+  }
+
+  String _deriveUuidFromDeviceId(String deviceId) {
+    return const Uuid().v5(Uuid.NAMESPACE_URL, deviceId);
   }
 }

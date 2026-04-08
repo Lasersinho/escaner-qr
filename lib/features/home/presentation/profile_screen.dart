@@ -8,6 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/neo_button.dart';
 import '../../auth/presentation/auth_provider.dart';
+import '../../auth/domain/user.dart';
 
 /// Profile screen – shows user info and logout action.
 class ProfileScreen extends ConsumerWidget {
@@ -16,7 +17,7 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authProvider).user;
-    final name = user?.name ?? 'Usuario';
+    final name = user?.fullName ?? 'Usuario';
     final email = user?.email ?? '—';
     final initials = _getInitials(name);
 
@@ -47,18 +48,22 @@ class ProfileScreen extends ConsumerWidget {
                       const SizedBox(height: 16),
                       Text(
                         name,
+                        textAlign: TextAlign.center,
                         style: Theme.of(context)
                             .textTheme
                             .headlineMedium
                             ?.copyWith(fontSize: 22),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 8),
                       Text(
                         email,
-                        style: Theme.of(context).textTheme.bodyMedium,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                       const SizedBox(height: 36),
-                      _buildInfoCard(context, email),
+                      _buildInfoCard(context, user),
                       const SizedBox(height: 32),
                       NeoButton(
                         label: 'Cerrar Sesión',
@@ -143,7 +148,10 @@ class ProfileScreen extends ConsumerWidget {
 
   // ── Info Card ─────────────────────────────────────────────────────────────
 
-  Widget _buildInfoCard(BuildContext context, String email) {
+  Widget _buildInfoCard(BuildContext context, User? user) {
+    final document = user?.document;
+    final userId = user?.id;
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppTokens.radiusPanel),
       child: BackdropFilter(
@@ -163,26 +171,44 @@ class ProfileScreen extends ConsumerWidget {
             ],
           ),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _InfoRow(
-                icon: Icons.email_outlined,
-                label: 'Correo',
-                value: email,
+              Text(
+                'Información Personal',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
               ),
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Divider(
-                    color: AppColors.glassBorder, height: 1),
-              ),
-              _InfoRow(
-                icon: Icons.lock_outline_rounded,
-                label: 'Contraseña',
-                value: '•••••••••',
-                valueColor: AppColors.textSecondary,
-              ),
+              const SizedBox(height: 16),
+              if (document != null && document.isNotEmpty) ...[
+                _InfoRow(
+                  icon: Icons.badge_outlined,
+                  label: 'Documento',
+                  value: document,
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Divider(color: AppColors.glassBorder, height: 1),
+                ),
+              ],
+              if ((document == null || document.isEmpty) &&
+                  (userId == null || userId.isEmpty)) ...[
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    child: Text(
+                      'Información no disponible',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.textSecondary,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
-          
         ),
       ),
     );
