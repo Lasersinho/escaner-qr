@@ -111,7 +111,7 @@ class AttendanceActionNotifier extends StateNotifier<AttendanceActionState> {
   ///   4. Si está fuera de rango → remoto, si está dentro → oficina
   ///   5. Gestionar token de sesión en local storage
   ///   6. Registrar asistencia en el backend
-  Future<void> processAttendance({int type = 1}) async {
+  Future<void> processAttendance({int type = 1, String? existingToken}) async {
     print('Starting processAttendance, type: $type');
     // ── Estado: procesando ──
     state = state.copyWith(
@@ -127,6 +127,7 @@ class AttendanceActionNotifier extends StateNotifier<AttendanceActionState> {
       final result = await _proximityService.validateProximity();
       print('Proximity result: $result');
 
+      
       // ── Paso 2: Detectar ubicación falsa (Fake GPS) ──
       if (result.isMocked) {
         state = state.copyWith(
@@ -137,6 +138,7 @@ class AttendanceActionNotifier extends StateNotifier<AttendanceActionState> {
         );
         return;
       }
+      
 
       // ── Paso 3: Verificar que esté dentro del radio o Remoto ──
       int headquarterId;
@@ -144,7 +146,7 @@ class AttendanceActionNotifier extends StateNotifier<AttendanceActionState> {
 
       if (!result.isWithinRange) {
         headquarterId = 0; // ID designado para trabajo remoto
-        officeName = 'Trabajo Remoto';
+        officeName = 'Remoto';
         // Opcional: mostrar un warning o solicitar confirmación si se desea
         // pero por los requerimientos, simplemente se marca como remoto.
       } else {
@@ -161,8 +163,9 @@ class AttendanceActionNotifier extends StateNotifier<AttendanceActionState> {
         print('[DEBUG] processAttendance: Generating new token for Entry: $token');
         await _secureStorage.write(key: _tokenKey, value: token);
       } else { // Salida
-        token = await _secureStorage.read(key: _tokenKey);
-        print('[DEBUG] processAttendance: Retrieved token for Exit: $token');
+        // Use existing token if provided, otherwise fall back to stored token
+        token = existingToken ?? await _secureStorage.read(key: _tokenKey);
+        print('[DEBUG] processAttendance: Using token for Exit: $token (existingToken: $existingToken)');
         if (token == null) {
           print('[DEBUG] processAttendance: WARNING: No token found for Exit. Generating a contingency token.');
           // Si no hay token de entrada, genera uno por contingencia y previene null

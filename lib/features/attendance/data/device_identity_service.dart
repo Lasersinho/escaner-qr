@@ -1,5 +1,8 @@
 import 'dart:io';
+import 'package:android_id/android_id.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:uuid/uuid.dart';
 
 /// Excepción crítica del sistema de Autenticación.
 class DeviceIdentityException implements Exception {
@@ -18,58 +21,82 @@ class DeviceIdentityService {
   // 2. Caché local volatil donde guardaremos el Hardware ID verificado
   String? _cachedDeviceId;
 
-  // 3. Constructor privado
+  // 3. Clave segura para el UUID persistido
+  static const String _deviceUuidKey = 'device_uuid';
+
+  // 4. Almacenamiento seguro para guardar el UUID la primera vez que se instala la app.
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+
+  // 5. Constructor privado
   DeviceIdentityService._internal();
 
-  // 4. Getter de factoría para fácil consumo (Dependency Injection nativo)
+  // 6. Getter de factoría para fácil consumo (Dependency Injection nativo)
   factory DeviceIdentityService() {
     return _instance;
   }
 
   /// Extrae rigurosamente la huella del Hardware actual.
-  /// Aplica el principio <Zero Trust>: Si falla la extracción, el acceso se quiebra devolviendo exc.
+  /// Si existe un identificador de dispositivo estable, derive un UUID consistente
+  /// y úselo como el ID único del teléfono incluso después de reinstalar.
   Future<String> getDeviceIdentifier() async {
-    // Optimización O(1): Retorno inmediato sin ir a las API nativas si ya tenemos el dato
     if (_cachedDeviceId != null && _cachedDeviceId!.isNotEmpty) {
+      print('DeviceIdentityService: using cached device id=$_cachedDeviceId');
       return _cachedDeviceId!;
     }
 
     try {
-      final deviceInfo = DeviceInfoPlugin();
-      String? hardwareId;
-
-      if (Platform.isAndroid) {
-        final androidInfo = await deviceInfo.androidInfo;
-        // NOTA ARQUITECTÓNICA: Dependiendo de la versión exacta de device_info_plus,
-        // .id puede apuntar al Build.ID (compartido entre modelos) o a la constante de hardware.
-        // Si precisas el `android_id` estricto (Settings.Secure.ANDROID_ID), 
-        // normalmente requieres hoy en día la librería complementaria `android_id`.
-        // Para este contexto, extraemos un identificador con device_info_plus:
-        hardwareId = androidInfo.id;
-      } else if (Platform.isIOS) {
-        final iosInfo = await deviceInfo.iosInfo;
-        hardwareId = iosInfo.identifierForVendor; // Clásico IDFV
-      } else {
-        throw DeviceIdentityException('Plataforma no soportada para Device Binding.');
+      final storedUuid = await _secureStorage.read(key: _deviceUuidKey);
+      if (storedUuid != null && storedUuid.isNotEmpty) {
+        _cachedDeviceId = storedUuid;
+        print('DeviceIdentityService: recovered persisted uuid=$_cachedDeviceId');
+        return _cachedDeviceId!;
       }
 
-      // Validación Zero-Trust: Denegación Absoluta ante comportamientos extraños del SO
-      if (hardwareId == null || hardwareId.trim().isEmpty) {
-         throw DeviceIdentityException('Hardware fantasma detectado. El OS ocultó sistemáticamente la información de IDFV o AndroidID.');
+      final stableDeviceId = await _getStableDeviceId();
+      if (stableDeviceId != null && stableDeviceId.isNotEmpty) {
+        final derivedUuid = _deriveUuidFromDeviceId(stableDeviceId);
+        await _secureStorage.write(key: _deviceUuidKey, value: derivedUuid);
+        _cachedDeviceId = derivedUuid;
+        print('DeviceIdentityService: derived uuid=$_cachedDeviceId from stableDeviceId=$stableDeviceId');
+        return _cachedDeviceId!;
       }
 
-      // Caché Exitoso. Persiste el Hardware ID en memoria mientras la app viva.
-      _cachedDeviceId = hardwareId;
+      final generatedUuid = const Uuid().v4();
+      await _secureStorage.write(key: _deviceUuidKey, value: generatedUuid);
+      _cachedDeviceId = generatedUuid;
+      print('DeviceIdentityService: no stable device id available, generated uuid=$_cachedDeviceId');
       return _cachedDeviceId!;
-
     } on DeviceIdentityException {
-      // Relanzar nuestras propias excepciones sin envolverlas
       rethrow;
     } catch (e) {
-      // Bloqueo estricto si hay fallos nativos esotéricos o permisos denegados críticos
-      throw DeviceIdentityException(
-        'Quiebre de Seguridad en extracción nativa: Incapaz de acceder a los registros del Dispositivo.',
-      );
+      final msg = 'Quiebre de Seguridad en extracción nativa o persistencia: ${e.toString()}';
+      print('DeviceIdentityService ERROR: $msg');
+      throw DeviceIdentityException(msg);
     }
+  }
+
+  Future<String?> _getStableDeviceId() async {
+    try {
+      if (Platform.isAndroid) {
+        final androidId = await const AndroidId().getId();
+        print('DeviceIdentityService: android_id=$androidId');
+        return androidId;
+      } else if (Platform.isIOS) {
+        final deviceInfo = DeviceInfoPlugin();
+        final iosInfo = await deviceInfo.iosInfo;
+        final stableId = iosInfo.identifierForVendor;
+        print('DeviceIdentityService: ios stable id=$stableId');
+        return stableId;
+      }
+      print('DeviceIdentityService: no stable device id available for platform');
+      return null;
+    } catch (e) {
+      print('DeviceIdentityService: failed to read stable device id: ${e.toString()}');
+      return null;
+    }
+  }
+
+  String _deriveUuidFromDeviceId(String deviceId) {
+    return const Uuid().v5(Uuid.NAMESPACE_URL, deviceId);
   }
 }

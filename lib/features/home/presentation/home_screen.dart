@@ -57,7 +57,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
     print('[DEBUG] _markAttendance: nextType=$nextType');
 
-    ref.read(attendanceActionProvider.notifier).processAttendance(type: nextType);
+    // If marking exit, find the token from today's entry
+    String? existingToken;
+    if (nextType == 2) {
+      final now = DateTime.now();
+      final todayStart = DateTime(now.year, now.month, now.day);
+      final todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59);
+
+      // Find today's entry record
+      final todayEntries = ref.read(attendanceHistoryProvider).allRecords.where((record) =>
+          record.type == AttendanceType.entry &&
+          record.dateTime.isAfter(todayStart.subtract(const Duration(seconds: 1))) &&
+          record.dateTime.isBefore(todayEnd.add(const Duration(seconds: 1)))
+      ).toList();
+
+      if (todayEntries.isNotEmpty) {
+        // Use the token from the most recent entry
+        existingToken = todayEntries.first.token;
+        print('[DEBUG] _markAttendance: Using existing token from today\'s entry: $existingToken');
+      }
+    }
+
+    ref.read(attendanceActionProvider.notifier).processAttendance(
+      type: nextType,
+      existingToken: existingToken,
+    );
   }
 
   void _handleSuccess(AttendanceActionState state) {
@@ -108,12 +132,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               children: [
                 _buildHeader(context, user?.name ?? 'Usuario', historyState),
                 Expanded(
-                  child: CustomScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    slivers: [
-                      _buildHistoryList(historyState),
-                      const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
-                    ],
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      await ref.read(attendanceHistoryProvider.notifier).fetchHistory();
+                    },
+                    color: AppColors.primaryAccent,
+                    backgroundColor: AppColors.backgroundStart,
+                    child: CustomScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: [
+                        _buildHistoryList(historyState),
+                        const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
+                      ],
+                    ),
                   ),
                 ),
               ],
