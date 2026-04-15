@@ -48,7 +48,7 @@ class AuthRepository {
         data: {
           'username': email,
           'password': password,
-          'device': deviceId,
+          'device': "deviceId",
         },
       );
       print('Login response: ${response.data}');
