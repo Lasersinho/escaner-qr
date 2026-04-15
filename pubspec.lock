@@ -1034,6 +1034,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.5"
+  worldtime:
+    dependency: "direct main"
+    description:
+      name: worldtime
+      sha256: c72479a39763c29694f2cf505b8c9eea35c8ae6a1ad775b55d823547eca02409
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.4.2"
   xdg_directories:
     dependency: transitive
     description:

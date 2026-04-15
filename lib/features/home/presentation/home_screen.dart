@@ -45,15 +45,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     if (_isProcessing) return;
     setState(() => _isProcessing = true);
 
-    // Determine type based on the last record if available, or default to entry
-    // Use filteredRecords because it is sorted descending (the first is the last recorded)
-    final history = ref.read(attendanceHistoryProvider).filteredRecords;
-    final lastType = history.isNotEmpty ? history.first.type : AttendanceType.exit;
+    // Determine type using the latest real record, not the filtered view.
+    final historyState = ref.read(attendanceHistoryProvider);
+    final latestRecord = historyState.latestRecord;
+    final lastType = latestRecord?.type ?? AttendanceType.exit;
     final nextType = lastType == AttendanceType.entry ? 2 : 1;
 
-    print('[DEBUG] _markAttendance: history.length=${history.length}');
-    if (history.isNotEmpty) {
-      print('[DEBUG] _markAttendance: lastType=${history.first.type}');
+    print('[DEBUG] _markAttendance: allRecords.length=${historyState.allRecords.length}');
+    if (latestRecord != null) {
+      print('[DEBUG] _markAttendance: lastType=${latestRecord.type}');
     }
     print('[DEBUG] _markAttendance: nextType=$nextType');
 
@@ -155,8 +155,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             bottom: 24,
             right: 24,
             child: _buildFAB(
-              historyState.allRecords.isEmpty || 
-              historyState.allRecords.first.type == AttendanceType.exit
+              historyState.latestRecord == null ||
+              historyState.latestRecord!.type == AttendanceType.exit
             ),
           ),
 
