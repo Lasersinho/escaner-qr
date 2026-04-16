@@ -46,26 +46,28 @@ class _NeoButtonState extends State<NeoButton>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              _pressed ? AppColors.primaryAccent.withOpacity(0.85) : AppColors.primaryAccent,
-              _pressed ? AppColors.primaryAccent.withOpacity(0.85) : AppColors.primaryAccent.withOpacity(0.9),
+              _pressed ? context.colors.primaryAccent.withOpacity(0.85) : context.colors.primaryAccent,
+              _pressed ? context.colors.primaryAccent.withOpacity(0.85) : context.colors.primaryAccent.withOpacity(0.9),
             ],
           ),
           borderRadius: BorderRadius.circular(AppTokens.radiusButton),
         ),
         alignment: Alignment.center,
         child: widget.isLoading
-            ? const SizedBox(
+            ? SizedBox(
                 height: 22,
                 width: 22,
                 child: CircularProgressIndicator(
                   strokeWidth: 2.5,
                   valueColor:
-                      AlwaysStoppedAnimation<Color>(AppColors.textOnAccent),
+                      AlwaysStoppedAnimation<Color>(context.colors.textOnAccent),
                 ),
               )
             : Text(
                 widget.label,
-                style: Theme.of(context).textTheme.labelLarge,
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: context.colors.textOnAccent,
+                ),
               ),
       ),
     );

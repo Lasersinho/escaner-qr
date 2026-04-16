@@ -149,7 +149,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     });
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundStart,
+      backgroundColor: context.colors.backgroundStart,
       body: SafeArea(
         child: Stack(
           children: [
@@ -186,12 +186,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           .read(attendanceHistoryProvider.notifier)
                           .fetchHistory();
                     },
-                    color: AppColors.primaryAccent,
-                    backgroundColor: AppColors.backgroundStart,
+                    color: context.colors.primaryAccent,
+                    backgroundColor: context.colors.backgroundStart,
                     child: CustomScrollView(
                       physics: const AlwaysScrollableScrollPhysics(),
                       slivers: [
-                        _buildHistoryList(historyState),
+                        _buildHistoryList(context, historyState),
                         const SliverPadding(
                             padding: EdgeInsets.only(bottom: 100)),
                       ],
@@ -236,10 +236,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text(
+          Text(
             'Asistencias',
             style: TextStyle(
-              color: AppColors.textPrimary,
+              color: context.colors.textPrimary,
               fontWeight: FontWeight.w900,
               fontSize: 28,
               letterSpacing: -1,
@@ -257,14 +257,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: _showCalendar
-                        ? AppColors.primaryAccent
-                        : AppColors.primaryAccent.withOpacity(0.1),
+                        ? context.colors.primaryAccent
+                        : context.colors.primaryAccent.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     Icons.calendar_month_rounded,
                     color:
-                        _showCalendar ? Colors.white : AppColors.primaryAccent,
+                        _showCalendar ? Colors.white : context.colors.primaryAccent,
                     size: 22,
                   ),
                 ),
@@ -274,11 +274,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 onTap: () => context.push('/profile'),
                 child: CircleAvatar(
                   radius: 20,
-                  backgroundColor: AppColors.primaryAccent.withOpacity(0.1),
+                  backgroundColor: context.colors.primaryAccent.withOpacity(0.1),
                   child: Text(
                     userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
-                    style: const TextStyle(
-                      color: AppColors.primaryAccent,
+                    style: TextStyle(
+                      color: context.colors.primaryAccent,
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
                     ),
@@ -294,13 +294,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   // Removed _buildFilterSection as it was moved to AppBar
 
-  Widget _buildHistoryList(AttendanceHistoryState state) {
+  Widget _buildHistoryList(BuildContext context, AttendanceHistoryState state) {
     final grouped = state.groupedByDay;
     if (grouped.isEmpty) {
-      return const SliverFillRemaining(
+      return SliverFillRemaining(
         child: Center(
           child: Text('No hay registros en este periodo',
-              style: TextStyle(color: AppColors.textSecondary)),
+              style: TextStyle(color: context.colors.textSecondary)),
         ),
       );
     }
@@ -323,15 +323,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   isToday
                       ? 'Hoy'
                       : DateFormat('EEEE, d MMMM', 'es_ES').format(date),
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: TextStyle(
+                    color: context.colors.textSecondary,
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.5,
                   ),
                 ),
               ),
-              ...records.map((r) => _buildHistoryCard(r)),
+              ...records.map((r) => _buildHistoryCard(context, r)),
             ],
           );
         },
@@ -340,7 +340,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
-  Widget _buildHistoryCard(AttendanceRecord record) {
+  Widget _buildHistoryCard(BuildContext context, AttendanceRecord record) {
     final isEntry = record.type == AttendanceType.entry;
     final timeStr = DateFormat('hh:mm a').format(record.dateTime);
 
@@ -348,15 +348,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.cardSurface,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: AppColors.primaryAccent.withOpacity(0.05),
+          color: context.colors.primaryAccent.withOpacity(0.05),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryAccent.withOpacity(0.04),
+            color: context.colors.glassShadow.withOpacity(0.04), // Dynamic shadow
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -367,13 +367,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: (isEntry ? AppColors.success : AppColors.secondaryAccent)
+              color: (isEntry ? context.colors.success : context.colors.secondaryAccent)
                   .withOpacity(0.1),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(
               isEntry ? Icons.login_rounded : Icons.logout_rounded,
-              color: isEntry ? AppColors.success : AppColors.secondaryAccent,
+              color: isEntry ? context.colors.success : context.colors.secondaryAccent,
             ),
           ),
           const SizedBox(width: 16),
@@ -383,16 +383,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               children: [
                 Text(
                   isEntry ? 'Entrada' : 'Salida',
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
+                  style: TextStyle(
+                    color: context.colors.textPrimary,
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
                 ),
                 Text(
                   record.officeName ?? 'Ubicación desconocida',
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: TextStyle(
+                    color: context.colors.textSecondary,
                     fontSize: 13,
                   ),
                 ),
@@ -401,8 +401,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           ),
           Text(
             timeStr,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
+            style: TextStyle(
+              color: context.colors.textPrimary,
               fontWeight: FontWeight.w700,
               fontSize: 15,
             ),
@@ -436,17 +436,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: isNextEntry
-                  ? [AppColors.fabGradientStart, AppColors.fabGradientEnd]
+                  ? [context.colors.fabGradientStart, context.colors.fabGradientEnd]
                   : [
-                      AppColors.secondaryAccent,
-                      AppColors.secondaryAccent.withOpacity(0.7)
+                      context.colors.secondaryAccent,
+                      context.colors.secondaryAccent.withOpacity(0.7)
                     ],
             ),
             boxShadow: [
               BoxShadow(
                 color: (isNextEntry
-                        ? AppColors.primaryAccent
-                        : AppColors.secondaryAccent)
+                        ? context.colors.primaryAccent
+                        : context.colors.secondaryAccent)
                     .withOpacity(0.4),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
@@ -478,22 +478,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               width: 320,
               padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.colors.glassPanel,
                 borderRadius: BorderRadius.circular(32),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.success.withOpacity(0.15),
+                    color: context.colors.success.withOpacity(0.15),
                     blurRadius: 40,
                     offset: const Offset(0, 12),
                   ),
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: context.colors.glassShadow.withOpacity(0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
                 ],
                 border: Border.all(
-                    color: Colors.white.withOpacity(0.5), width: 1.5),
+                    color: Colors.white.withOpacity(0.1), width: 1.5),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -501,19 +501,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: AppColors.success.withOpacity(0.1),
+                      color: context.colors.success.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.check_circle_rounded,
-                        color: AppColors.success, size: 48),
+                    child: Icon(Icons.check_circle_rounded,
+                        color: context.colors.success, size: 48),
                   ),
                   const SizedBox(height: 24),
-                  const Text(
+                  Text(
                     '¡Marcación exitosa!',
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
+                      color: context.colors.textPrimary,
                       letterSpacing: -0.5,
                     ),
                   ),
@@ -521,23 +521,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   RichText(
                     textAlign: TextAlign.center,
                     text: TextSpan(
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 15,
-                          color: AppColors.textSecondary,
+                          color: context.colors.textSecondary,
                           height: 1.5),
                       children: [
                         const TextSpan(text: 'Registrada a las '),
                         TextSpan(
                             text: time,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary)),
+                                color: context.colors.textPrimary)),
                         const TextSpan(text: '\nen '),
                         TextSpan(
                             text: office,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary)),
+                                color: context.colors.textPrimary)),
                       ],
                     ),
                   ),
@@ -548,7 +548,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     child: ElevatedButton(
                       onPressed: () => Navigator.pop(context),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryAccent,
+                        backgroundColor: context.colors.primaryAccent,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
@@ -582,22 +582,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               width: 320,
               padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: context.colors.glassPanel,
                 borderRadius: BorderRadius.circular(32),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.error.withOpacity(0.15),
+                    color: context.colors.error.withOpacity(0.15),
                     blurRadius: 40,
                     offset: const Offset(0, 12),
                   ),
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: context.colors.glassShadow.withOpacity(0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
                 ],
                 border: Border.all(
-                    color: Colors.white.withOpacity(0.5), width: 1.5),
+                    color: Colors.white.withOpacity(0.1), width: 1.5),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -605,19 +605,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: AppColors.error.withOpacity(0.1),
+                      color: context.colors.error.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.error_rounded,
-                        color: AppColors.error, size: 48),
+                    child: Icon(Icons.error_rounded,
+                        color: context.colors.error, size: 48),
                   ),
                   const SizedBox(height: 24),
-                  const Text(
+                  Text(
                     '¡Ups, algo falló!',
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
+                      color: context.colors.textPrimary,
                       letterSpacing: -0.5,
                     ),
                   ),
@@ -627,9 +627,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         .replaceFirst('Exception: ', '')
                         .replaceFirst('AttendanceException: ', ''),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 15,
-                        color: AppColors.textSecondary,
+                        color: context.colors.textSecondary,
                         height: 1.5),
                   ),
                   const SizedBox(height: 32),
@@ -639,7 +639,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     child: ElevatedButton(
                       onPressed: () => Navigator.pop(context),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryAccent,
+                        backgroundColor: context.colors.primaryAccent,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(

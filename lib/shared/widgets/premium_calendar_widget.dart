@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/theme/app_colors.dart';
+
 class PremiumCalendarWidget extends StatefulWidget {
   final DateTime? initialDate;
   final ValueChanged<DateTime> onDaySelected;
@@ -71,18 +73,13 @@ class _PremiumCalendarWidgetState extends State<PremiumCalendarWidget> {
       margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.calendarSurface,
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04), // Sombra suave premium
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-          BoxShadow(
-            color: Colors.white.withOpacity(0.8), // Efecto Neumórfico ligero (highlight)
-            blurRadius: 15,
-            offset: const Offset(0, -5),
+            color: context.colors.glassShadow.withOpacity(0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -110,15 +107,15 @@ class _PremiumCalendarWidgetState extends State<PremiumCalendarWidget> {
             _pageController.previousPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
             _changeMonth(-1);
           },
-          icon: const Icon(Icons.chevron_left_rounded, size: 28, color: Colors.black54),
+          icon: Icon(Icons.chevron_left_rounded, size: 28, color: context.colors.textSecondary),
         ),
         Text(
           '${monthName[0].toUpperCase()}${monthName.substring(1)} ${_currentMonth.year}',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.5,
-            color: Colors.black87,
+            color: context.colors.textPrimary,
           ),
         ),
         IconButton(
@@ -126,7 +123,7 @@ class _PremiumCalendarWidgetState extends State<PremiumCalendarWidget> {
             _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
             _changeMonth(1);
           },
-          icon: const Icon(Icons.chevron_right_rounded, size: 28, color: Colors.black54),
+          icon: Icon(Icons.chevron_right_rounded, size: 28, color: context.colors.textSecondary),
         ),
       ],
     );
@@ -145,7 +142,7 @@ class _PremiumCalendarWidgetState extends State<PremiumCalendarWidget> {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: Colors.grey.shade400,
+                color: context.colors.textDisabled,
               ),
             ),
           ),
@@ -211,12 +208,12 @@ class _PremiumCalendarWidgetState extends State<PremiumCalendarWidget> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: isSelected 
-                      ? Theme.of(context).primaryColor 
-                      : (isToday ? Colors.grey.withOpacity(0.1) : Colors.transparent),
+                      ? context.colors.primaryAccent 
+                      : (isToday ? context.colors.primaryAccent.withOpacity(0.1) : Colors.transparent),
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: Theme.of(context).primaryColor.withOpacity(0.4),
+                            color: context.colors.primaryAccent.withOpacity(0.4),
                             blurRadius: 8,
                             offset: const Offset(0, 4),
                           )
@@ -235,7 +232,7 @@ class _PremiumCalendarWidgetState extends State<PremiumCalendarWidget> {
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                           color: isSelected 
                               ? Colors.white 
-                              : (isFuture ? Colors.grey.shade300 : Colors.black87),
+                              : (isFuture ? context.colors.calendarDayFuture : context.colors.textPrimary),
                         ),
                       ),
                     ],

@@ -61,9 +61,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       if (!locGranted) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Operación Denegada: Requerimos permisos de GPS obligatoriamente para tu sesión.'),
-            backgroundColor: AppColors.error,
+          SnackBar(
+            content: const Text('Operación Denegada: Requerimos permisos de GPS obligatoriamente para tu sesión.'),
+            backgroundColor: context.colors.error,
           ),
         );
         return; // Aborta inicio de sesión
@@ -88,7 +88,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(gradient: AppColors.backgroundGradient),
+        decoration: BoxDecoration(gradient: context.colors.backgroundGradient),
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
@@ -108,13 +108,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           shape: BoxShape.circle,
                           gradient: LinearGradient(
                             colors: [
-                              AppColors.primaryAccent,
-                              AppColors.secondaryAccent,
+                              context.colors.primaryAccent,
+                              context.colors.secondaryAccent,
                             ],
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.primaryAccent.withOpacity(0.35),
+                              color: context.colors.primaryAccent.withOpacity(0.35),
                               blurRadius: 20,
                               offset: const Offset(0, 6),
                             ),
@@ -132,7 +132,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                       // ── Title ──
                       Text(
                         'Pulse',
-                        style: Theme.of(context).textTheme.headlineLarge,
+                        style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                          color: context.colors.textPrimary,
+                        ),
                       ),
 
                       const SizedBox(height: 32),
@@ -162,8 +164,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         const SizedBox(height: 12),
                         Text(
                           authState.errorMessage ?? 'Error desconocido',
-                          style: const TextStyle(
-                            color: AppColors.error,
+                          style: TextStyle(
+                            color: context.colors.error,
                             fontSize: 13,
                           ),
                         ),

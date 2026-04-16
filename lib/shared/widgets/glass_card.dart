@@ -28,8 +28,19 @@ class GlassCard extends StatelessWidget {
       width: width,
       padding: padding ?? AppTokens.paddingCard,
       decoration: BoxDecoration(
-        color: AppColors.glassPanel, // We will make this fully opaque in app_colors
+        color: context.colors.glassPanel,
         borderRadius: BorderRadius.circular(radius),
+        border: Border.all(
+          color: context.colors.glassBorder,
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: context.colors.glassShadow,
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: child,
     );
