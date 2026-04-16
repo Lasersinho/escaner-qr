@@ -39,6 +39,20 @@ class AttendanceHistoryState {
   final DateTimeRange? customDateRange;
   final List<AttendanceRecord> allRecords;
 
+  /// Returns the most recent record from the full history,
+  /// regardless of the active UI filter.
+  AttendanceRecord? get latestRecord {
+    if (allRecords.isEmpty) return null;
+
+    AttendanceRecord latest = allRecords.first;
+    for (final record in allRecords.skip(1)) {
+      if (record.dateTime.isAfter(latest.dateTime)) {
+        latest = record;
+      }
+    }
+    return latest;
+  }
+
   /// Returns records filtered by the current [filter], sorted descending.
   List<AttendanceRecord> get filteredRecords {
     if (filter == AttendanceTimeFilter.custom && customDateRange != null) {

@@ -39,8 +39,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(attendanceHistoryProvider.notifier).setCustomDateRange(
-        DateTimeRange(start: _selectedDate, end: _selectedDate),
-      );
+            DateTimeRange(start: _selectedDate, end: _selectedDate),
+          );
     });
   }
 
@@ -73,12 +73,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // Si no hay registros de hoy → la próxima acción es ENTRADA (type=1)
     // Si el último registro de hoy fue una ENTRADA → la próxima es SALIDA (type=2)
     // Si el último registro de hoy fue una SALIDA → la próxima es ENTRADA (type=1)
-    final lastTodayType = todayRecords.isNotEmpty ? todayRecords.first.type : null;
+    final lastTodayType =
+        todayRecords.isNotEmpty ? todayRecords.first.type : null;
     final nextType = lastTodayType == AttendanceType.entry ? 2 : 1;
 
-    print('[DEBUG] _markAttendance: todayRecords.length=${todayRecords.length}');
+    print(
+        '[DEBUG] _markAttendance: todayRecords.length=${todayRecords.length}');
     if (todayRecords.isNotEmpty) {
-      print('[DEBUG] _markAttendance: lastTodayType=${todayRecords.first.type} at ${todayRecords.first.dateTime}');
+      print(
+          '[DEBUG] _markAttendance: lastTodayType=${todayRecords.first.type} at ${todayRecords.first.dateTime}');
     }
     print('[DEBUG] _markAttendance: nextType=$nextType');
 
@@ -98,9 +101,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
 
     ref.read(attendanceActionProvider.notifier).processAttendance(
-      type: nextType,
-      existingToken: existingToken,
-    );
+          type: nextType,
+          existingToken: existingToken,
+        );
   }
 
   void _handleSuccess(AttendanceActionState state) {
@@ -109,8 +112,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final now = DateTime.now();
 
     // Add to history list immediately
-    final typeToAdd = state.type == 2 ? AttendanceType.exit : AttendanceType.entry;
-    print('[DEBUG] _handleSuccess: adding record of type $typeToAdd to local history');
+    final typeToAdd =
+        state.type == 2 ? AttendanceType.exit : AttendanceType.entry;
+    print(
+        '[DEBUG] _handleSuccess: adding record of type $typeToAdd to local history');
 
     ref.read(attendanceHistoryProvider.notifier).addRecord(
           AttendanceRecord(
@@ -122,7 +127,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           ),
         );
 
-    _showSuccessDialog(state.formattedTime ?? '--:--', state.officeName ?? 'Sede');
+    _showSuccessDialog(
+        state.formattedTime ?? '--:--', state.officeName ?? 'Sede');
   }
 
   @override
@@ -153,26 +159,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 AnimatedSize(
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeInOut,
-                  child: _showCalendar 
-                    ? PremiumCalendarWidget(
-                        initialDate: _selectedDate,
-                        markedDates: historyState.allRecords.map((r) => r.dateTime).toList(),
-                        onDaySelected: (date) {
-                          setState(() {
-                            _selectedDate = date;
-                            _showCalendar = false;
-                          });
-                          ref.read(attendanceHistoryProvider.notifier).setCustomDateRange(
-                            DateTimeRange(start: date, end: date),
-                          );
-                        },
-                      )
-                    : const SizedBox(width: double.infinity, height: 0),
+                  child: _showCalendar
+                      ? PremiumCalendarWidget(
+                          initialDate: _selectedDate,
+                          markedDates: historyState.allRecords
+                              .map((r) => r.dateTime)
+                              .toList(),
+                          onDaySelected: (date) {
+                            setState(() {
+                              _selectedDate = date;
+                              _showCalendar = false;
+                            });
+                            ref
+                                .read(attendanceHistoryProvider.notifier)
+                                .setCustomDateRange(
+                                  DateTimeRange(start: date, end: date),
+                                );
+                          },
+                        )
+                      : const SizedBox(width: double.infinity, height: 0),
                 ),
                 Expanded(
                   child: RefreshIndicator(
                     onRefresh: () async {
-                      await ref.read(attendanceHistoryProvider.notifier).fetchHistory();
+                      await ref
+                          .read(attendanceHistoryProvider.notifier)
+                          .fetchHistory();
                     },
                     color: AppColors.primaryAccent,
                     backgroundColor: AppColors.backgroundStart,
@@ -180,7 +192,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       physics: const AlwaysScrollableScrollPhysics(),
                       slivers: [
                         _buildHistoryList(historyState),
-                        const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
+                        const SliverPadding(
+                            padding: EdgeInsets.only(bottom: 100)),
                       ],
                     ),
                   ),
@@ -188,34 +201,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               ],
             ),
 
-          // Floating Action Button with Pulse
-          Positioned(
-            bottom: 24,
-            right: 24,
-            child: _buildFAB(() {
-              // BUG FIX #3: Mismo problema en el FAB — calcular el tipo correcto
-              // basándose en el último registro de HOY, no en allRecords (que
-              // incluye histórico de otros días y puede dar el tipo incorrecto).
-              final now = DateTime.now();
-              final todayStart = DateTime(now.year, now.month, now.day);
-              final todayRecords = historyState.allRecords
-                  .where((r) => !r.dateTime.isBefore(todayStart))
-                  .toList()
-                ..sort((a, b) => b.dateTime.compareTo(a.dateTime));
-              final lastTodayType = todayRecords.isNotEmpty ? todayRecords.first.type : null;
-              return lastTodayType == AttendanceType.entry ? 2 : 1;
-            }()),
-          ),
+            // Floating Action Button with Pulse
+            Positioned(
+              bottom: 24,
+              right: 24,
+              child: _buildFAB(() {
+                // BUG FIX #3: Mismo problema en el FAB — calcular el tipo correcto
+                // basándose en el último registro de HOY, no en allRecords (que
+                // incluye histórico de otros días y puede dar el tipo incorrecto).
+                final now = DateTime.now();
+                final todayStart = DateTime(now.year, now.month, now.day);
+                final todayRecords = historyState.allRecords
+                    .where((r) => !r.dateTime.isBefore(todayStart))
+                    .toList()
+                  ..sort((a, b) => b.dateTime.compareTo(a.dateTime));
+                final lastTodayType =
+                    todayRecords.isNotEmpty ? todayRecords.first.type : null;
+                return lastTodayType == AttendanceType.entry ? 2 : 1;
+              }()),
+            ),
 
-          if (actionState.status == AttendanceActionStatus.securing)
-            _buildProcessingOverlay(actionState.message ?? 'Procesando...'),
-        ],
+            if (actionState.status == AttendanceActionStatus.securing)
+              _buildProcessingOverlay(actionState.message ?? 'Procesando...'),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
-  Widget _buildHeader(BuildContext context, String userName, AttendanceHistoryState historyState) {
+  Widget _buildHeader(BuildContext context, String userName,
+      AttendanceHistoryState historyState) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
       child: Row(
@@ -241,12 +256,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 icon: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: _showCalendar ? AppColors.primaryAccent : AppColors.primaryAccent.withOpacity(0.1),
+                    color: _showCalendar
+                        ? AppColors.primaryAccent
+                        : AppColors.primaryAccent.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     Icons.calendar_month_rounded,
-                    color: _showCalendar ? Colors.white : AppColors.primaryAccent,
+                    color:
+                        _showCalendar ? Colors.white : AppColors.primaryAccent,
                     size: 22,
                   ),
                 ),
@@ -281,7 +299,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     if (grouped.isEmpty) {
       return const SliverFillRemaining(
         child: Center(
-          child: Text('No hay registros en este periodo', style: TextStyle(color: AppColors.textSecondary)),
+          child: Text('No hay registros en este periodo',
+              style: TextStyle(color: AppColors.textSecondary)),
         ),
       );
     }
@@ -301,7 +320,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
                 child: Text(
-                  isToday ? 'Hoy' : DateFormat('EEEE, d MMMM', 'es_ES').format(date),
+                  isToday
+                      ? 'Hoy'
+                      : DateFormat('EEEE, d MMMM', 'es_ES').format(date),
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 14,
@@ -346,7 +367,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: (isEntry ? AppColors.success : AppColors.secondaryAccent).withOpacity(0.1),
+              color: (isEntry ? AppColors.success : AppColors.secondaryAccent)
+                  .withOpacity(0.1),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(
@@ -415,11 +437,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               end: Alignment.bottomRight,
               colors: isNextEntry
                   ? [AppColors.fabGradientStart, AppColors.fabGradientEnd]
-                  : [AppColors.secondaryAccent, AppColors.secondaryAccent.withOpacity(0.7)],
+                  : [
+                      AppColors.secondaryAccent,
+                      AppColors.secondaryAccent.withOpacity(0.7)
+                    ],
             ),
             boxShadow: [
               BoxShadow(
-                color: (isNextEntry ? AppColors.primaryAccent : AppColors.secondaryAccent).withOpacity(0.4),
+                color: (isNextEntry
+                        ? AppColors.primaryAccent
+                        : AppColors.secondaryAccent)
+                    .withOpacity(0.4),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
@@ -436,8 +464,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       ),
     );
   }
-
-
 
   void _showSuccessDialog(String time, String office) {
     showDialog(
@@ -466,7 +492,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     offset: const Offset(0, 4),
                   ),
                 ],
-                border: Border.all(color: Colors.white.withOpacity(0.5), width: 1.5),
+                border: Border.all(
+                    color: Colors.white.withOpacity(0.5), width: 1.5),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -477,14 +504,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       color: AppColors.success.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 48),
+                    child: const Icon(Icons.check_circle_rounded,
+                        color: AppColors.success, size: 48),
                   ),
                   const SizedBox(height: 24),
                   const Text(
-                    '¡Marcación exitosa!', 
+                    '¡Marcación exitosa!',
                     style: TextStyle(
-                      fontSize: 22, 
-                      fontWeight: FontWeight.w800, 
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
                       color: AppColors.textPrimary,
                       letterSpacing: -0.5,
                     ),
@@ -493,12 +521,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   RichText(
                     textAlign: TextAlign.center,
                     text: TextSpan(
-                      style: const TextStyle(fontSize: 15, color: AppColors.textSecondary, height: 1.5),
+                      style: const TextStyle(
+                          fontSize: 15,
+                          color: AppColors.textSecondary,
+                          height: 1.5),
                       children: [
                         const TextSpan(text: 'Registrada a las '),
-                        TextSpan(text: time, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                        TextSpan(
+                            text: time,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary)),
                         const TextSpan(text: '\nen '),
-                        TextSpan(text: office, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                        TextSpan(
+                            text: office,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary)),
                       ],
                     ),
                   ),
@@ -516,7 +555,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text('Genial, gracias', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      child: const Text('Genial, gracias',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ],
@@ -555,7 +596,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     offset: const Offset(0, 4),
                   ),
                 ],
-                border: Border.all(color: Colors.white.withOpacity(0.5), width: 1.5),
+                border: Border.all(
+                    color: Colors.white.withOpacity(0.5), width: 1.5),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -566,23 +608,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       color: AppColors.error.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.error_rounded, color: AppColors.error, size: 48),
+                    child: const Icon(Icons.error_rounded,
+                        color: AppColors.error, size: 48),
                   ),
                   const SizedBox(height: 24),
                   const Text(
-                    '¡Ups, algo falló!', 
+                    '¡Ups, algo falló!',
                     style: TextStyle(
-                      fontSize: 22, 
-                      fontWeight: FontWeight.w800, 
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
                       color: AppColors.textPrimary,
                       letterSpacing: -0.5,
                     ),
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    message.replaceFirst('Exception: ', '').replaceFirst('AttendanceException: ', ''),
+                    message
+                        .replaceFirst('Exception: ', '')
+                        .replaceFirst('AttendanceException: ', ''),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 15, color: AppColors.textSecondary, height: 1.5),
+                    style: const TextStyle(
+                        fontSize: 15,
+                        color: AppColors.textSecondary,
+                        height: 1.5),
                   ),
                   const SizedBox(height: 32),
                   SizedBox(
@@ -598,7 +646,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text('Entendido', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      child: const Text('Entendido',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ],
@@ -619,7 +669,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           children: [
             const CircularProgressIndicator(color: Colors.white),
             const SizedBox(height: 16),
-            Text(message, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            Text(message,
+                style: const TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold)),
           ],
         ),
       ),

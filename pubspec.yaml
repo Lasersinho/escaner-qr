@@ -39,6 +39,7 @@ dependencies:
     sdk: flutter
   uuid: ^4.5.3
   android_id: 0.3.6
+  worldtime: ^1.4.2
 
 dev_dependencies:
   flutter_test:
