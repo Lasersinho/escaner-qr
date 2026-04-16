@@ -9,6 +9,7 @@ import '../../attendance/domain/attendance_record.dart';
 import '../../attendance/presentation/attendance_history_provider.dart';
 import '../../attendance/presentation/attendance_provider.dart';
 import '../../auth/presentation/auth_provider.dart';
+import '../../../shared/widgets/premium_calendar_widget.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -22,6 +23,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   late final AnimationController _pulseCtrl;
   late final Animation<double> _pulseAnim;
   bool _isProcessing = false;
+  DateTime _selectedDate = DateTime.now();
+  bool _showCalendar = false;
 
   @override
   void initState() {
@@ -33,6 +36,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _pulseAnim = Tween<double>(begin: 1.0, end: 1.1).animate(
       CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
     );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(attendanceHistoryProvider.notifier).setCustomDateRange(
+        DateTimeRange(start: _selectedDate, end: _selectedDate),
+      );
+    });
   }
 
   @override
@@ -131,6 +140,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             Column(
               children: [
                 _buildHeader(context, user?.name ?? 'Usuario', historyState),
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                  child: _showCalendar 
+                    ? PremiumCalendarWidget(
+                        initialDate: _selectedDate,
+                        markedDates: historyState.allRecords.map((r) => r.dateTime).toList(),
+                        onDaySelected: (date) {
+                          setState(() {
+                            _selectedDate = date;
+                            _showCalendar = false;
+                          });
+                          ref.read(attendanceHistoryProvider.notifier).setCustomDateRange(
+                            DateTimeRange(start: date, end: date),
+                          );
+                        },
+                      )
+                    : const SizedBox(width: double.infinity, height: 0),
+                ),
                 Expanded(
                   child: RefreshIndicator(
                     onRefresh: () async {
@@ -170,12 +198,41 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   Widget _buildHeader(BuildContext context, String userName, AttendanceHistoryState historyState) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          const Text(
+            'Asistencias',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w900,
+              fontSize: 28,
+              letterSpacing: -1,
+            ),
+          ),
           Row(
             children: [
+              IconButton(
+                onPressed: () {
+                  setState(() {
+                    _showCalendar = !_showCalendar;
+                  });
+                },
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: _showCalendar ? AppColors.primaryAccent : AppColors.primaryAccent.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.calendar_month_rounded,
+                    color: _showCalendar ? Colors.white : AppColors.primaryAccent,
+                    size: 22,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
               GestureDetector(
                 onTap: () => context.push('/profile'),
                 child: CircleAvatar(
@@ -191,62 +248,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   ),
                 ),
               ),
-              const SizedBox(width: 16),
-              const Text(
-                'Historial',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 28,
-                  letterSpacing: -1,
-                ),
-              ),
             ],
           ),
-          _buildFilterPill(historyState),
         ],
-      ),
-    );
-  }
-
-  Widget _buildFilterPill(AttendanceHistoryState historyState) {
-    return PopupMenuButton<AttendanceTimeFilter>(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      offset: const Offset(0, 40),
-      onSelected: (filter) {
-        if (filter == AttendanceTimeFilter.custom) {
-          _selectCustomDateRange();
-        } else {
-          ref.read(attendanceHistoryProvider.notifier).setFilter(filter);
-        }
-      },
-      itemBuilder: (context) => [
-        const PopupMenuItem(value: AttendanceTimeFilter.today, child: Text('Hoy')),
-        const PopupMenuItem(value: AttendanceTimeFilter.week, child: Text('Esta Semana')),
-        const PopupMenuItem(value: AttendanceTimeFilter.month, child: Text('Este Mes')),
-        const PopupMenuItem(value: AttendanceTimeFilter.custom, child: Text('Fechas Específicas')),
-      ],
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: AppColors.primaryAccent.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              historyState.filter.label,
-              style: const TextStyle(
-                color: AppColors.primaryAccent,
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
-            ),
-            const SizedBox(width: 4),
-            const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primaryAccent, size: 18),
-          ],
-        ),
       ),
     );
   }
@@ -408,26 +412,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
-  Future<void> _selectCustomDateRange() async {
-    final range = await showDateRangePicker(
-      context: context,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.primaryAccent,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (range != null) {
-      ref.read(attendanceHistoryProvider.notifier).setCustomDateRange(range);
-    }
-  }
+
 
   void _showSuccessDialog(String time, String office) {
     showDialog(
