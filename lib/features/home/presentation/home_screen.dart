@@ -24,6 +24,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   late final Animation<double> _pulseAnim;
   bool _isProcessing = false;
   DateTime _selectedDate = DateTime.now();
+  bool _showCalendar = false;
 
   @override
   void initState() {
@@ -139,17 +140,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             Column(
               children: [
                 _buildHeader(context, user?.name ?? 'Usuario', historyState),
-                PremiumCalendarWidget(
-                  initialDate: _selectedDate,
-                  markedDates: historyState.allRecords.map((r) => r.dateTime).toList(),
-                  onDaySelected: (date) {
-                    setState(() {
-                      _selectedDate = date;
-                    });
-                    ref.read(attendanceHistoryProvider.notifier).setCustomDateRange(
-                      DateTimeRange(start: date, end: date),
-                    );
-                  },
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                  child: _showCalendar 
+                    ? PremiumCalendarWidget(
+                        initialDate: _selectedDate,
+                        markedDates: historyState.allRecords.map((r) => r.dateTime).toList(),
+                        onDaySelected: (date) {
+                          setState(() {
+                            _selectedDate = date;
+                            _showCalendar = false;
+                          });
+                          ref.read(attendanceHistoryProvider.notifier).setCustomDateRange(
+                            DateTimeRange(start: date, end: date),
+                          );
+                        },
+                      )
+                    : const SizedBox(width: double.infinity, height: 0),
                 ),
                 Expanded(
                   child: RefreshIndicator(
@@ -194,8 +202,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          const Text(
+            'Asistencias',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w900,
+              fontSize: 28,
+              letterSpacing: -1,
+            ),
+          ),
           Row(
             children: [
+              IconButton(
+                onPressed: () {
+                  setState(() {
+                    _showCalendar = !_showCalendar;
+                  });
+                },
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: _showCalendar ? AppColors.primaryAccent : AppColors.primaryAccent.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.calendar_month_rounded,
+                    color: _showCalendar ? Colors.white : AppColors.primaryAccent,
+                    size: 22,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
               GestureDetector(
                 onTap: () => context.push('/profile'),
                 child: CircleAvatar(
@@ -209,16 +246,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       fontSize: 18,
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              const Text(
-                'Asistencias',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 28,
-                  letterSpacing: -1,
                 ),
               ),
             ],

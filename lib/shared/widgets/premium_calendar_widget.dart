@@ -22,7 +22,6 @@ class _PremiumCalendarWidgetState extends State<PremiumCalendarWidget> {
   late DateTime _currentMonth;
   final DateTime _today = DateTime.now();
   late PageController _pageController;
-  bool _isExpanded = false;
 
   @override
   void initState() {
@@ -91,22 +90,10 @@ class _PremiumCalendarWidgetState extends State<PremiumCalendarWidget> {
         mainAxisSize: MainAxisSize.min,
         children: [
           _buildHeader(),
-          AnimatedSize(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            alignment: Alignment.topCenter,
-            child: _isExpanded
-                ? Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const SizedBox(height: 16),
-                      _buildDaysOfWeek(),
-                      const SizedBox(height: 8),
-                      _buildCalendarGrid(),
-                    ],
-                  )
-                : const SizedBox(width: double.infinity, height: 0),
-          ),
+          const SizedBox(height: 16),
+          _buildDaysOfWeek(),
+          const SizedBox(height: 8),
+          _buildCalendarGrid(),
         ],
       ),
     );
@@ -125,36 +112,13 @@ class _PremiumCalendarWidgetState extends State<PremiumCalendarWidget> {
           },
           icon: const Icon(Icons.chevron_left_rounded, size: 28, color: Colors.black54),
         ),
-        GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () {
-            setState(() {
-              _isExpanded = !_isExpanded;
-            });
-          },
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                '${monthName[0].toUpperCase()}${monthName.substring(1)} ${_currentMonth.year}',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.5,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(width: 4),
-              AnimatedRotation(
-                turns: _isExpanded ? 0.5 : 0.0, // Rotar la flecha
-                duration: const Duration(milliseconds: 300),
-                child: const Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  size: 24,
-                  color: Colors.black87,
-                ),
-              ),
-            ],
+        Text(
+          '${monthName[0].toUpperCase()}${monthName.substring(1)} ${_currentMonth.year}',
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.5,
+            color: Colors.black87,
           ),
         ),
         IconButton(
