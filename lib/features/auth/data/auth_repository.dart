@@ -48,7 +48,7 @@ class AuthRepository {
         data: {
           'username': email,
           'password': password,
-          'device': "deviceId",
+          'device': deviceId,
         },
       );
       print('Login response: ${response.data}');
@@ -93,8 +93,16 @@ class AuthRepository {
       } else if (e.response?.statusCode == 500) {
         throw Exception('Error interno del servidor');
       } else if (e.response?.statusCode == 400) {
-        final message = e.response?.data?['message'] ?? 'Datos inválidos';
-        throw Exception('Error de validación: $message');
+        final dynamic data = e.response?.data;
+        String message = 'Datos inválidos';
+        
+        if (data is Map) {
+          message = data['message'] ?? (data['error'] ?? 'Datos inválidos');
+        } else if (data is String) {
+          message = data;
+        }
+        
+        throw Exception(message);
       }
 
       // Handle network errors

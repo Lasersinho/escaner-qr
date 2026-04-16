@@ -90,8 +90,11 @@ String _getUserFriendlyErrorMessage(Object error) {
   }
 
   // Device binding errors
+  if (errorString.contains('ya se encuentra en otro dispositivo')) {
+    return 'Tu cuenta ya está vinculada a otro dispositivo. Si reinstalaste la app o cambiaste de equipo, contacta al administrador para desvincular la sesión anterior.';
+  }
   if (errorString.contains('dispositivo') || errorString.contains('device')) {
-    return 'Error de identificación del dispositivo. Si reinstalaste la app, contacta soporte.';
+    return 'Error de identificación del dispositivo. Verifica los permisos e intenta nuevamente.';
   }
 
   // Generic errors
