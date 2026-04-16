@@ -54,37 +54,47 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     if (_isProcessing) return;
     setState(() => _isProcessing = true);
 
-    // Determine type based on the last record if available, or default to entry
-    // Use filteredRecords because it is sorted descending (the first is the last recorded)
-    final history = ref.read(attendanceHistoryProvider).filteredRecords;
-    final lastType = history.isNotEmpty ? history.first.type : AttendanceType.exit;
-    final nextType = lastType == AttendanceType.entry ? 2 : 1;
+    // BUG FIX #1: Usar allRecords (NO filteredRecords) para determinar el tipo
+    // de la próxima marcación. filteredRecords depende del filtro activo del
+    // calendario, que puede estar apuntando a un día sin registros,
+    // causando que el fallback incorrecto de 'exit' dispare una entrada falsa.
+    final allRecords = ref.read(attendanceHistoryProvider).allRecords;
 
-    print('[DEBUG] _markAttendance: history.length=${history.length}');
-    if (history.isNotEmpty) {
-      print('[DEBUG] _markAttendance: lastType=${history.first.type}');
+    // Encontrar el registro más reciente del DÍA DE HOY en todos los records,
+    // independientemente del filtro activo en la UI.
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+
+    final todayRecords = allRecords
+        .where((r) => !r.dateTime.isBefore(todayStart))
+        .toList()
+      ..sort((a, b) => b.dateTime.compareTo(a.dateTime)); // descendente
+
+    // Si no hay registros de hoy → la próxima acción es ENTRADA (type=1)
+    // Si el último registro de hoy fue una ENTRADA → la próxima es SALIDA (type=2)
+    // Si el último registro de hoy fue una SALIDA → la próxima es ENTRADA (type=1)
+    final lastTodayType = todayRecords.isNotEmpty ? todayRecords.first.type : null;
+    final nextType = lastTodayType == AttendanceType.entry ? 2 : 1;
+
+    print('[DEBUG] _markAttendance: todayRecords.length=${todayRecords.length}');
+    if (todayRecords.isNotEmpty) {
+      print('[DEBUG] _markAttendance: lastTodayType=${todayRecords.first.type} at ${todayRecords.first.dateTime}');
     }
     print('[DEBUG] _markAttendance: nextType=$nextType');
 
-    // If marking exit, find the token from today's entry
+    // BUG FIX #2: Buscar el token de la entrada de HOY en todayRecords
+    // (ya ordenados por fecha descendente), garantizando el más reciente primero.
     String? existingToken;
     if (nextType == 2) {
-      final now = DateTime.now();
-      final todayStart = DateTime(now.year, now.month, now.day);
-      final todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59);
-
-      // Find today's entry record
-      final todayEntries = ref.read(attendanceHistoryProvider).allRecords.where((record) =>
-          record.type == AttendanceType.entry &&
-          record.dateTime.isAfter(todayStart.subtract(const Duration(seconds: 1))) &&
-          record.dateTime.isBefore(todayEnd.add(const Duration(seconds: 1)))
-      ).toList();
-
-      if (todayEntries.isNotEmpty) {
-        // Use the token from the most recent entry
-        existingToken = todayEntries.first.token;
-        print('[DEBUG] _markAttendance: Using existing token from today\'s entry: $existingToken');
-      }
+      // El token de la sesión activa es el de la última ENTRADA de hoy
+      final latestTodayEntry = todayRecords.firstWhere(
+        (r) => r.type == AttendanceType.entry,
+        orElse: () => todayRecords.first, // Fallback seguro
+      );
+      existingToken = latestTodayEntry.token;
+      print('[DEBUG] _markAttendance: Token found in history: $existingToken');
+      // Si el token del record es null (e.g. registro local sin token),
+      // el provider caerá al SecureStorage como segunda línea de defensa.
     }
 
     ref.read(attendanceActionProvider.notifier).processAttendance(
@@ -182,10 +192,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           Positioned(
             bottom: 24,
             right: 24,
-            child: _buildFAB(
-              historyState.allRecords.isEmpty || 
-              historyState.allRecords.first.type == AttendanceType.exit
-            ),
+            child: _buildFAB(() {
+              // BUG FIX #3: Mismo problema en el FAB — calcular el tipo correcto
+              // basándose en el último registro de HOY, no en allRecords (que
+              // incluye histórico de otros días y puede dar el tipo incorrecto).
+              final now = DateTime.now();
+              final todayStart = DateTime(now.year, now.month, now.day);
+              final todayRecords = historyState.allRecords
+                  .where((r) => !r.dateTime.isBefore(todayStart))
+                  .toList()
+                ..sort((a, b) => b.dateTime.compareTo(a.dateTime));
+              final lastTodayType = todayRecords.isNotEmpty ? todayRecords.first.type : null;
+              return lastTodayType == AttendanceType.entry ? 2 : 1;
+            }()),
           ),
 
           if (actionState.status == AttendanceActionStatus.securing)
@@ -371,7 +390,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
-  Widget _buildFAB(bool isNextEntry) {
+  Widget _buildFAB(int nextType) {
+    // nextType: 1 = próxima acción es ENTRADA, 2 = próxima acción es SALIDA
+    final isNextEntry = nextType == 1;
     return AnimatedBuilder(
       animation: _pulseAnim,
       builder: (context, child) {
@@ -382,27 +403,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       },
       child: GestureDetector(
         onTap: _markAttendance,
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
           width: 64,
           height: 64,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: const LinearGradient(
+            gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [AppColors.fabGradientStart, AppColors.fabGradientEnd],
+              colors: isNextEntry
+                  ? [AppColors.fabGradientStart, AppColors.fabGradientEnd]
+                  : [AppColors.secondaryAccent, AppColors.secondaryAccent.withOpacity(0.7)],
             ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primaryAccent.withOpacity(0.4),
+                color: (isNextEntry ? AppColors.primaryAccent : AppColors.secondaryAccent).withOpacity(0.4),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
             ],
           ),
-          child: const Center(
+          child: Center(
             child: Icon(
-              Icons.touch_app_rounded,
+              isNextEntry ? Icons.login_rounded : Icons.logout_rounded,
               color: Colors.white,
               size: 32,
             ),
