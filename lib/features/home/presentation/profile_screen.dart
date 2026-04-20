@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/theme_provider.dart';
+import '../../../core/theme/ui_mode_provider.dart';
 import '../../../shared/widgets/neo_button.dart';
 import '../../../shared/widgets/stagger_list.dart';
 import '../../auth/presentation/auth_provider.dart';
@@ -376,6 +377,60 @@ class ProfileScreen extends ConsumerWidget {
               activeColor: context.colors.primaryAccent,
               onChanged: (_) {
                 ref.read(themeModeProvider.notifier).toggle(context);
+              },
+            ),
+          ],
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Divider(color: context.colors.divider, height: 1),
+        ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: context.colors.primaryAccent.withOpacity(0.10),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.view_agenda_rounded,
+                color: context.colors.primaryAccent,
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Modo Simplificado',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: context.colors.textPrimary,
+                        ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Interfaz clásica y robusta',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontSize: 11,
+                          letterSpacing: 0.3,
+                          color: context.colors.textSecondary,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+            Switch.adaptive(
+              value: ref.watch(uiModeProvider),
+              activeColor: context.colors.primaryAccent,
+              onChanged: (_) {
+                ref.read(uiModeProvider.notifier).toggle();
               },
             ),
           ],
