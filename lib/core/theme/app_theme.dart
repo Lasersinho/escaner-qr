@@ -117,6 +117,24 @@ ThemeData buildAppTheme() {
             GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600),
       ),
     ),
+    bottomSheetTheme: BottomSheetThemeData(
+      backgroundColor: AppColorsLight.glassPanel,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      elevation: 0,
+    ),
+    snackBarTheme: SnackBarThemeData(
+      backgroundColor: AppColorsLight.textPrimary,
+      contentTextStyle: GoogleFonts.poppins(
+        color: AppColorsLight.backgroundStart,
+        fontSize: 14,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      behavior: SnackBarBehavior.floating,
+    ),
   );
 }
 
@@ -211,6 +229,24 @@ ThemeData buildDarkAppTheme() {
     dialogTheme: DialogTheme(
       backgroundColor: AppColorsDark.glassPanel,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+    ),
+    bottomSheetTheme: BottomSheetThemeData(
+      backgroundColor: AppColorsDark.glassPanel,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      elevation: 0,
+    ),
+    snackBarTheme: SnackBarThemeData(
+      backgroundColor: AppColorsDark.textPrimary,
+      contentTextStyle: GoogleFonts.poppins(
+        color: AppColorsDark.backgroundStart,
+        fontSize: 14,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      behavior: SnackBarBehavior.floating,
     ),
   );
 }

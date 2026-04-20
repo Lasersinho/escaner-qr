@@ -56,6 +56,20 @@ abstract final class AppColorsLight {
   // Calendario
   static const Color calendarSurface = Color(0xFFFFFFFF);
   static const Color calendarDayFuture = Color(0xFFCBD5E1);
+
+  // Status Hero Card
+  static const Color statusActiveStart = Color(0xFF10B981);
+  static const Color statusActiveEnd   = Color(0xFF059669);
+  static const Color statusInactiveStart = Color(0xFF6366F1);
+  static const Color statusInactiveEnd   = Color(0xFF4F46E5);
+
+  // Shimmer / Skeleton
+  static const Color shimmerBase      = Color(0xFFE2E8F0);
+  static const Color shimmerHighlight = Color(0xFFF1F5F9);
+
+  // Timeline
+  static const Color timelineLine     = Color(0xFFE2E8F0);
+  static const Color timelineDot      = Color(0xFF4F46E5);
 }
 
 // ── Paleta Dark ───────────────────────────────────────────────────────────────
@@ -105,6 +119,20 @@ abstract final class AppColorsDark {
   // Calendario
   static const Color calendarSurface  = Color(0xFF1E2130);
   static const Color calendarDayFuture = Color(0xFF2D3348);
+
+  // Status Hero Card
+  static const Color statusActiveStart = Color(0xFF10B981);
+  static const Color statusActiveEnd   = Color(0xFF047857);
+  static const Color statusInactiveStart = Color(0xFF818CF8);
+  static const Color statusInactiveEnd   = Color(0xFF6366F1);
+
+  // Shimmer / Skeleton
+  static const Color shimmerBase      = Color(0xFF1E2130);
+  static const Color shimmerHighlight = Color(0xFF2D3348);
+
+  // Timeline
+  static const Color timelineLine     = Color(0xFF2D3348);
+  static const Color timelineDot      = Color(0xFF818CF8);
 }
 
 // ── Acceso Unificado via BuildContext ─────────────────────────────────────────
@@ -140,6 +168,14 @@ abstract interface class _AppColorTokens {
   Color get divider;
   Color get calendarSurface;
   Color get calendarDayFuture;
+  Color get statusActiveStart;
+  Color get statusActiveEnd;
+  Color get statusInactiveStart;
+  Color get statusInactiveEnd;
+  Color get shimmerBase;
+  Color get shimmerHighlight;
+  Color get timelineLine;
+  Color get timelineDot;
 }
 
 class _LightTokens implements _AppColorTokens {
@@ -165,6 +201,14 @@ class _LightTokens implements _AppColorTokens {
   @override Color get divider               => AppColorsLight.divider;
   @override Color get calendarSurface       => AppColorsLight.calendarSurface;
   @override Color get calendarDayFuture     => AppColorsLight.calendarDayFuture;
+  @override Color get statusActiveStart     => AppColorsLight.statusActiveStart;
+  @override Color get statusActiveEnd       => AppColorsLight.statusActiveEnd;
+  @override Color get statusInactiveStart   => AppColorsLight.statusInactiveStart;
+  @override Color get statusInactiveEnd     => AppColorsLight.statusInactiveEnd;
+  @override Color get shimmerBase           => AppColorsLight.shimmerBase;
+  @override Color get shimmerHighlight      => AppColorsLight.shimmerHighlight;
+  @override Color get timelineLine          => AppColorsLight.timelineLine;
+  @override Color get timelineDot           => AppColorsLight.timelineDot;
 }
 
 class _DarkTokens implements _AppColorTokens {
@@ -190,6 +234,14 @@ class _DarkTokens implements _AppColorTokens {
   @override Color get divider               => AppColorsDark.divider;
   @override Color get calendarSurface       => AppColorsDark.calendarSurface;
   @override Color get calendarDayFuture     => AppColorsDark.calendarDayFuture;
+  @override Color get statusActiveStart     => AppColorsDark.statusActiveStart;
+  @override Color get statusActiveEnd       => AppColorsDark.statusActiveEnd;
+  @override Color get statusInactiveStart   => AppColorsDark.statusInactiveStart;
+  @override Color get statusInactiveEnd     => AppColorsDark.statusInactiveEnd;
+  @override Color get shimmerBase           => AppColorsDark.shimmerBase;
+  @override Color get shimmerHighlight      => AppColorsDark.shimmerHighlight;
+  @override Color get timelineLine          => AppColorsDark.timelineLine;
+  @override Color get timelineDot           => AppColorsDark.timelineDot;
 }
 
 // ── Backward compatibility aliases ────────────────────────────────────────────
