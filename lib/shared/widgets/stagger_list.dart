@@ -10,7 +10,7 @@ class StaggerItem extends StatefulWidget {
     required this.index,
     required this.child,
     this.delay = const Duration(milliseconds: 60),
-    this.duration = const Duration(milliseconds: 400),
+    this.duration = const Duration(milliseconds: 250),
   });
 
   /// Position in the list; controls the stagger delay.
@@ -43,8 +43,13 @@ class _StaggerItemState extends State<StaggerItem>
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
 
-    // Start after stagger delay
-    Future.delayed(widget.delay * widget.index, () {
+    // Cap the stagger effect to the first 6 items.
+    // If we multiply the delay by the index indefinitely, items far down the list
+    // (e.g. index 30) will take several seconds to appear when scrolled into view.
+    final int effectiveIndex = widget.index < 6 ? widget.index : 0;
+    final Duration actualDelay = Duration(milliseconds: 30 * effectiveIndex);
+
+    Future.delayed(actualDelay, () {
       if (mounted) _ctrl.forward();
     });
   }
