@@ -325,24 +325,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             ),
           ),
 
-          // ── Version indicator ──
-          Positioned(
-            bottom: 16,
-            left: 0,
-            right: 0,
-            child: FadeTransition(
-              opacity: _buttonFade,
-              child: Text(
-                'v1.0.0',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: context.colors.textDisabled,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ),
+
         ],
       ),
     );
