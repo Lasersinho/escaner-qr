@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,11 +22,30 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
 
   Future<void> _load() async {
     final raw = await _storage.read(key: _kThemeModeKey);
-    state = switch (raw) {
+    final mode = switch (raw) {
       'light'  => ThemeMode.light,
       'dark'   => ThemeMode.dark,
       _        => ThemeMode.system,
     };
+    state = mode;
+    _updateSystemUI(mode);
+  }
+
+  void _updateSystemUI(ThemeMode mode) {
+    final isDark = mode == ThemeMode.dark ||
+        (mode == ThemeMode.system &&
+            ui.PlatformDispatcher.instance.platformBrightness ==
+                Brightness.dark);
+
+    SystemChrome.setSystemUIOverlayStyle(
+      SystemUiOverlayStyle(
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+        statusBarColor: Colors.transparent,
+        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarIconBrightness:
+            isDark ? Brightness.light : Brightness.dark,
+      ),
+    );
   }
 
   /// Alterna entre light y dark (si estaba en system, primero detecta el actual).
@@ -40,14 +60,7 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
       value: next == ThemeMode.dark ? 'dark' : 'light',
     );
 
-    // Actualizar la barra de estado del sistema
-    SystemChrome.setSystemUIOverlayStyle(
-      SystemUiOverlayStyle(
-        statusBarIconBrightness:
-            next == ThemeMode.dark ? Brightness.light : Brightness.dark,
-        statusBarColor: Colors.transparent,
-      ),
-    );
+    _updateSystemUI(next);
   }
 
   Future<void> setMode(ThemeMode mode) async {
@@ -60,5 +73,6 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
         ThemeMode.system => 'system',
       },
     );
+    _updateSystemUI(mode);
   }
 }

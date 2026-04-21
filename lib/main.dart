@@ -15,11 +15,13 @@ Future<void> main() async {
     DeviceOrientation.portraitUp,
   ]);
 
-  // Transparent status bar
+  // Transparent status and navigation bar
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
 
