@@ -464,7 +464,7 @@ class _PremiumHomeViewState extends ConsumerState<PremiumHomeView>
         (context, index) {
           final date = dayKeys[index];
           final records = grouped[date]!
-            ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
+            ..sort((a, b) => b.dateTime.compareTo(a.dateTime));
           final isToday = DateUtils.isSameDay(date, DateTime.now());
 
           return StaggerItem(
