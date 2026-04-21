@@ -46,6 +46,7 @@ class AttendanceActionState {
     this.formattedTime,
     this.officeName,
     this.type,
+    this.serverTimestamp,
   });
 
   final AttendanceActionStatus status;
@@ -59,6 +60,9 @@ class AttendanceActionState {
   /// El tipo de marcación (1 = Entrada, 2 = Salida)
   final int? type;
 
+  /// Timestamp real del servidor (hora de Perú), no la hora local del dispositivo.
+  final DateTime? serverTimestamp;
+
   AttendanceActionState copyWith({
     AttendanceActionStatus? status,
     String? message,
@@ -66,6 +70,7 @@ class AttendanceActionState {
     String? formattedTime,
     String? officeName,
     int? type,
+    DateTime? serverTimestamp,
   }) =>
       AttendanceActionState(
         status: status ?? this.status,
@@ -74,6 +79,7 @@ class AttendanceActionState {
         formattedTime: formattedTime ?? this.formattedTime,
         officeName: officeName ?? this.officeName,
         type: type ?? this.type,
+        serverTimestamp: serverTimestamp ?? this.serverTimestamp,
       );
 }
 
@@ -208,6 +214,7 @@ class AttendanceActionNotifier extends StateNotifier<AttendanceActionState> {
         formattedTime: '$hh:$mm',
         officeName: officeName,
         type: type,
+        serverTimestamp: attendanceTimestamp,
       );
       print('Process completed successfully');
     } on ProximityException catch (e) {

@@ -104,9 +104,11 @@ class _SimplifiedHomeViewState extends ConsumerState<SimplifiedHomeView>
   void _handleSuccess(AttendanceActionState state) {
     print('[DEBUG] _handleSuccess: status=${state.status}, type=${state.type}');
     final user = ref.read(authProvider).user;
-    final now = DateTime.now();
+    final timestamp = state.serverTimestamp ?? DateTime.now();
 
-    // Add to history list immediately
+    // Add to history list immediately using the server timestamp,
+    // NOT DateTime.now(), to avoid showing the wrong time when
+    // the device clock is out of sync.
     final typeToAdd =
         state.type == 2 ? AttendanceType.exit : AttendanceType.entry;
     print(
@@ -114,13 +116,17 @@ class _SimplifiedHomeViewState extends ConsumerState<SimplifiedHomeView>
 
     ref.read(attendanceHistoryProvider.notifier).addRecord(
           AttendanceRecord(
-            id: 'now_${now.millisecondsSinceEpoch}',
+            id: 'now_${timestamp.millisecondsSinceEpoch}',
             type: typeToAdd,
-            dateTime: now,
+            dateTime: timestamp,
             employeeId: user?.id ?? 'usr_001',
             officeName: state.officeName,
           ),
         );
+
+    // Re-sync with the server in the background so the optimistic
+    // local record is replaced with the real server data.
+    ref.read(attendanceHistoryProvider.notifier).fetchHistory();
 
     _showSuccessDialog(
         state.formattedTime ?? '--:--', state.officeName ?? 'Sede');
