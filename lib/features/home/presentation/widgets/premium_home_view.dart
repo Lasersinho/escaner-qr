@@ -312,7 +312,7 @@ class _PremiumHomeViewState extends ConsumerState<PremiumHomeView>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'OfficeFlow',
+                'Pulse',
                 style: TextStyle(
                   color: context.colors.primaryAccent,
                   fontWeight: FontWeight.w800,

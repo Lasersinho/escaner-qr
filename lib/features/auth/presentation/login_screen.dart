@@ -216,7 +216,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           child: Column(
                             children: [
                               Text(
-                                'OfficeFlow',
+                                'Pulse',
                                 style: Theme.of(context)
                                     .textTheme
                                     .headlineLarge

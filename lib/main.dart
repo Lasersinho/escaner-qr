@@ -33,7 +33,7 @@ Future<void> main() async {
   runApp(
     UncontrolledProviderScope(
       container: container,
-      child: const OfficeFlowApp(),
+      child: const PulseApp(),
     ),
   );
 }

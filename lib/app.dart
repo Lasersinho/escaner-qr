@@ -13,8 +13,8 @@ import 'features/home/presentation/profile_screen.dart';
 import 'core/theme/app_page_transitions.dart';
 
 /// Root application widget containing theme and router configuration.
-class OfficeFlowApp extends ConsumerWidget {
-  const OfficeFlowApp({super.key});
+class PulseApp extends ConsumerWidget {
+  const PulseApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -22,7 +22,7 @@ class OfficeFlowApp extends ConsumerWidget {
     final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
-      title: 'OfficeFlow',
+      title: 'Pulse',
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(),
       darkTheme: buildDarkAppTheme(),

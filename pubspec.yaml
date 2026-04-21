@@ -1,5 +1,5 @@
-name: office_flow
-description: "OfficeFlow Premium Attendance - QR-based departure scanner"
+name: Pulse
+description: "Pulse Office Version"
 publish_to: "none"
 version: 1.0.0+1
 
