@@ -40,8 +40,8 @@ class ProfileScreen extends ConsumerWidget {
     final daysWorked = <String>{};
     for (final r in monthRecords) {
       if (r.type == AttendanceType.entry) {
-        daysWorked.add(
-            '${r.dateTime.year}-${r.dateTime.month}-${r.dateTime.day}');
+        daysWorked
+            .add('${r.dateTime.year}-${r.dateTime.month}-${r.dateTime.day}');
       }
     }
 
@@ -59,8 +59,8 @@ class ProfileScreen extends ConsumerWidget {
               _buildTopBar(context),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 24, vertical: 16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                   child: Column(
                     children: [
                       const SizedBox(height: 8),
@@ -95,12 +95,10 @@ class ProfileScreen extends ConsumerWidget {
                         child: Text(
                           email,
                           textAlign: TextAlign.center,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(
-                                color: context.colors.textSecondary,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: context.colors.textSecondary,
+                                  ),
                         ),
                       ),
 
@@ -126,13 +124,6 @@ class ProfileScreen extends ConsumerWidget {
                       StaggerItem(
                         index: 5,
                         child: _buildSettingsCard(context, ref),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // ── About Card ──
-                      StaggerItem(
-                        index: 6,
-                        child: _buildAboutCard(context),
                       ),
 
                       const SizedBox(height: 28),
@@ -203,10 +194,12 @@ class ProfileScreen extends ConsumerWidget {
   Widget _buildAvatar(BuildContext context, String initials) {
     return Hero(
       tag: 'profile_avatar',
-      child: Container(
-        width: 96,
-        height: 96,
-        decoration: BoxDecoration(
+      child: Material(
+        type: MaterialType.transparency,
+        child: Container(
+          width: 96,
+          height: 96,
+          decoration: BoxDecoration(
           shape: BoxShape.circle,
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -283,8 +276,7 @@ class ProfileScreen extends ConsumerWidget {
         if (user?.lastname != null && user!.lastname.isNotEmpty) ...[
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
-            child:
-                Divider(color: context.colors.divider, height: 1),
+            child: Divider(color: context.colors.divider, height: 1),
           ),
           _InfoRow(
             icon: Icons.person_outline_rounded,
@@ -295,8 +287,7 @@ class ProfileScreen extends ConsumerWidget {
         if (document != null && document.isNotEmpty) ...[
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
-            child:
-                Divider(color: context.colors.divider, height: 1),
+            child: Divider(color: context.colors.divider, height: 1),
           ),
           _InfoRow(
             icon: Icons.badge_outlined,
@@ -434,30 +425,6 @@ class ProfileScreen extends ConsumerWidget {
               },
             ),
           ],
-        ),
-      ],
-    );
-  }
-
-  // ── About Card ─────────────────────────────────────────────────────────────
-
-  Widget _buildAboutCard(BuildContext context) {
-    return _SectionCard(
-      title: 'Acerca de',
-      children: [
-        _InfoRow(
-          icon: Icons.info_outline_rounded,
-          label: 'Versión',
-          value: 'v1.0.0',
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          child: Divider(color: context.colors.divider, height: 1),
-        ),
-        _InfoRow(
-          icon: Icons.business_rounded,
-          label: 'Aplicación',
-          value: 'OfficeFlow',
         ),
       ],
     );
@@ -622,12 +589,10 @@ class _InfoRow extends StatelessWidget {
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            color:
-                context.colors.primaryAccent.withOpacity(0.10),
+            color: context.colors.primaryAccent.withOpacity(0.10),
             shape: BoxShape.circle,
           ),
-          child: Icon(icon,
-              color: context.colors.primaryAccent, size: 18),
+          child: Icon(icon, color: context.colors.primaryAccent, size: 18),
         ),
         const SizedBox(width: 14),
         Expanded(
