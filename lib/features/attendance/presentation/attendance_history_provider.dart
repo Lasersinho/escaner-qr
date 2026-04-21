@@ -30,7 +30,7 @@ extension AttendanceTimeFilterLabel on AttendanceTimeFilter {
 
 class AttendanceHistoryState {
   const AttendanceHistoryState({
-    this.filter = AttendanceTimeFilter.week,
+    this.filter = AttendanceTimeFilter.today,
     this.customDateRange,
     this.allRecords = const [],
   });

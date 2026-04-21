@@ -200,38 +200,38 @@ class ProfileScreen extends ConsumerWidget {
           width: 96,
           height: 96,
           decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              context.colors.primaryAccent,
-              context.colors.secondaryAccent,
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                context.colors.primaryAccent,
+                context.colors.secondaryAccent,
+              ],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: context.colors.primaryAccent.withOpacity(0.40),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
+              ),
             ],
           ),
-          boxShadow: [
-            BoxShadow(
-              color: context.colors.primaryAccent.withOpacity(0.40),
-              blurRadius: 24,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Center(
-          child: Text(
-            initials,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 32,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1,
+          child: Center(
+            child: Text(
+              initials,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 32,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1,
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   // ── Stats Row ─────────────────────────────────────────────────────────────
 
@@ -399,7 +399,7 @@ class ProfileScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Modo Simplificado',
+                    'Modo Compacto',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
@@ -408,7 +408,7 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Interfaz clásica y robusta',
+                    'Interfaz más compacta y simple',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontSize: 11,
                           letterSpacing: 0.3,

@@ -37,11 +37,6 @@ class _SimplifiedHomeViewState extends ConsumerState<SimplifiedHomeView>
       CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
     );
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(attendanceHistoryProvider.notifier).setCustomDateRange(
-            DateTimeRange(start: _selectedDate, end: _selectedDate),
-          );
-    });
   }
 
   @override
@@ -170,11 +165,17 @@ class _SimplifiedHomeViewState extends ConsumerState<SimplifiedHomeView>
                               _selectedDate = date;
                               _showCalendar = false;
                             });
-                            ref
-                                .read(attendanceHistoryProvider.notifier)
-                                .setCustomDateRange(
-                                  DateTimeRange(start: date, end: date),
-                                );
+                            if (DateUtils.isSameDay(date, DateTime.now())) {
+                              ref
+                                  .read(attendanceHistoryProvider.notifier)
+                                  .setFilter(AttendanceTimeFilter.today);
+                            } else {
+                              ref
+                                  .read(attendanceHistoryProvider.notifier)
+                                  .setCustomDateRange(
+                                    DateTimeRange(start: date, end: date),
+                                  );
+                            }
                           },
                         )
                       : const SizedBox(width: double.infinity, height: 0),
