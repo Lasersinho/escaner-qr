@@ -272,15 +272,21 @@ class _SimplifiedHomeViewState extends ConsumerState<SimplifiedHomeView>
               const SizedBox(width: 8),
               GestureDetector(
                 onTap: () => context.push('/profile'),
-                child: CircleAvatar(
-                  radius: 20,
-                  backgroundColor: context.colors.primaryAccent.withOpacity(0.1),
-                  child: Text(
-                    userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
-                    style: TextStyle(
-                      color: context.colors.primaryAccent,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
+                child: Hero(
+                  tag: 'profile_avatar',
+                  child: Material(
+                    type: MaterialType.transparency,
+                    child: CircleAvatar(
+                      radius: 20,
+                      backgroundColor: context.colors.primaryAccent.withOpacity(0.1),
+                      child: Text(
+                        userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
+                        style: TextStyle(
+                          color: context.colors.primaryAccent,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
                     ),
                   ),
                 ),

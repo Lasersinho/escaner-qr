@@ -348,10 +348,12 @@ class _PremiumHomeViewState extends ConsumerState<PremiumHomeView>
                 onTap: () => context.push('/profile'),
                 child: Hero(
                   tag: 'profile_avatar',
-                  child: CircleAvatar(
-                    radius: 20,
-                    backgroundColor:
-                        context.colors.primaryAccent.withOpacity(0.1),
+                  child: Material(
+                    type: MaterialType.transparency,
+                    child: CircleAvatar(
+                      radius: 20,
+                      backgroundColor:
+                          context.colors.primaryAccent.withOpacity(0.1),
                     child: Text(
                       userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
                       style: TextStyle(
@@ -363,7 +365,8 @@ class _PremiumHomeViewState extends ConsumerState<PremiumHomeView>
                   ),
                 ),
               ),
-            ],
+            ),
+          ],
           ),
         ],
       ),

@@ -229,8 +229,9 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   // ── Stats Row ─────────────────────────────────────────────────────────────
 
