@@ -39,7 +39,6 @@ class _PremiumHomeViewState extends ConsumerState<PremiumHomeView>
     _headerFade =
         CurvedAnimation(parent: _headerFadeCtrl, curve: Curves.easeOut);
     _headerFadeCtrl.forward();
-
   }
 
   @override
@@ -311,15 +310,6 @@ class _PremiumHomeViewState extends ConsumerState<PremiumHomeView>
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Pulse ',
-                style: TextStyle(
-                  color: context.colors.primaryAccent,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 14,
-                  letterSpacing: 0.5,
-                ),
-              ),
               const SizedBox(height: 2),
               Text(
                 'Asistencias',
