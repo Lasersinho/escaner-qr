@@ -221,8 +221,8 @@ class _PremiumHomeViewState extends ConsumerState<PremiumHomeView>
             // ── Header ──
             FadeTransition(
               opacity: _headerFade,
-              child: _buildHeader(
-                  context, user?.name ?? 'Usuario', historyState),
+              child:
+                  _buildHeader(context, user?.name ?? 'Usuario', historyState),
             ),
 
             // ── Calendar (togglable) ──
@@ -270,9 +270,8 @@ class _PremiumHomeViewState extends ConsumerState<PremiumHomeView>
                         isActive: isActive,
                         activeSince: activeEntry?.dateTime,
                         officeName: activeEntry?.officeName,
-                        nextActionLabel: nextType == 1
-                            ? 'Marcar Entrada'
-                            : 'Marcar Salida',
+                        nextActionLabel:
+                            nextType == 1 ? 'Marcar Entrada' : 'Marcar Salida',
                         nextActionIcon: nextType == 1
                             ? Icons.login_rounded
                             : Icons.logout_rounded,
@@ -312,7 +311,7 @@ class _PremiumHomeViewState extends ConsumerState<PremiumHomeView>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Pulse',
+                'Pulse ',
                 style: TextStyle(
                   color: context.colors.primaryAccent,
                   fontWeight: FontWeight.w800,
@@ -354,19 +353,19 @@ class _PremiumHomeViewState extends ConsumerState<PremiumHomeView>
                       radius: 20,
                       backgroundColor:
                           context.colors.primaryAccent.withOpacity(0.1),
-                    child: Text(
-                      userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
-                      style: TextStyle(
-                        color: context.colors.primaryAccent,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
+                      child: Text(
+                        userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
+                        style: TextStyle(
+                          color: context.colors.primaryAccent,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
           ),
         ],
       ),
@@ -409,8 +408,8 @@ class _PremiumHomeViewState extends ConsumerState<PremiumHomeView>
           if (currentFilter == AttendanceTimeFilter.custom) ...[
             const SizedBox(width: 8),
             _FilterChip(
-              label: DateFormat('dd MMM', 'es')
-                  .format(historyState.customDateRange?.start ?? DateTime.now()),
+              label: DateFormat('dd MMM', 'es').format(
+                  historyState.customDateRange?.start ?? DateTime.now()),
               isSelected: true,
               onTap: () {
                 setState(() => _showCalendar = true);
@@ -520,8 +519,7 @@ class _PremiumHomeViewState extends ConsumerState<PremiumHomeView>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color:
-                              context.colors.primaryAccent.withOpacity(0.08),
+                          color: context.colors.primaryAccent.withOpacity(0.08),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(

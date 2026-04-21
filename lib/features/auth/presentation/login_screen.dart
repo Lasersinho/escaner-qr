@@ -114,7 +114,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Operación Denegada: Requerimos permisos de GPS obligatoriamente para tu sesión.'),
+            content: const Text(
+                'Operación Denegada: Requerimos permisos de GPS obligatoriamente para tu sesión.'),
             backgroundColor: context.colors.error,
           ),
         );
@@ -134,7 +135,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
-    final isLoading = authState.status == AuthStatus.authenticating || _isRequestingPermissions;
+    final isLoading = authState.status == AuthStatus.authenticating ||
+        _isRequestingPermissions;
 
     return Scaffold(
       body: Stack(
