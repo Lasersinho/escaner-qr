@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import 'bouncing_widget.dart';
 
 /// A prominent "hero" card that shows the user's current attendance status.
 ///
@@ -196,14 +197,28 @@ class _AnimatedStatusCardState extends State<AnimatedStatusCard>
           const SizedBox(height: 16),
 
           // ── Status text ──
-          Text(
-            isActive ? 'Estás activo' : 'Sin marcar hoy',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 26,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.5,
-              height: 1.2,
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            transitionBuilder: (child, animation) => FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0, 0.2),
+                  end: Offset.zero,
+                ).animate(animation),
+                child: child,
+              ),
+            ),
+            child: Text(
+              isActive ? 'Estás activo' : 'Sin marcar hoy',
+              key: ValueKey<bool>(isActive),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 26,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.5,
+                height: 1.2,
+              ),
             ),
           ),
 
@@ -257,38 +272,41 @@ class _AnimatedStatusCardState extends State<AnimatedStatusCard>
           const SizedBox(height: 20),
 
           // ── Action Button ──
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton.icon(
-              onPressed: widget.isProcessing ? null : widget.onActionPressed,
-              icon: widget.isProcessing
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Icon(widget.nextActionIcon, size: 22),
-              label: Text(
-                widget.isProcessing ? 'Procesando...' : widget.nextActionLabel,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.3,
+          BouncingWidget(
+            onPressed: widget.isProcessing ? null : widget.onActionPressed,
+            child: SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton.icon(
+                onPressed: widget.isProcessing ? null : () {}, // Handled by BouncingWidget
+                icon: widget.isProcessing
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Icon(widget.nextActionIcon, size: 22),
+                label: Text(
+                  widget.isProcessing ? 'Procesando...' : widget.nextActionLabel,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.3,
+                  ),
                 ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white.withOpacity(0.2),
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(
-                    color: Colors.white.withOpacity(0.3),
-                    width: 1.5,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white.withOpacity(0.2),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(
+                      color: Colors.white.withOpacity(0.3),
+                      width: 1.5,
+                    ),
                   ),
                 ),
               ),
