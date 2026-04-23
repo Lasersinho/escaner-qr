@@ -28,8 +28,8 @@ class ProfileScreen extends ConsumerWidget {
     final initials = _getInitials(name);
 
     // Compute stats
-    final now = DateTime.now();
-    final monthStart = DateTime(now.year, now.month, 1);
+    final referenceNow = historyState.serverNow ?? DateTime.now();
+    final monthStart = DateTime(referenceNow.year, referenceNow.month, 1);
     final monthRecords = historyState.allRecords
         .where((r) => !r.dateTime.isBefore(monthStart))
         .toList();

@@ -57,8 +57,8 @@ class _SimplifiedHomeViewState extends ConsumerState<SimplifiedHomeView>
 
     // Encontrar el registro más reciente del DÍA DE HOY en todos los records,
     // independientemente del filtro activo en la UI.
-    final now = DateTime.now();
-    final todayStart = DateTime(now.year, now.month, now.day);
+    final referenceNow = ref.read(attendanceHistoryProvider).serverNow ?? DateTime.now();
+    final todayStart = DateTime(referenceNow.year, referenceNow.month, referenceNow.day);
 
     final todayRecords = allRecords
         .where((r) => !r.dateTime.isBefore(todayStart))
@@ -163,15 +163,17 @@ class _SimplifiedHomeViewState extends ConsumerState<SimplifiedHomeView>
                   child: _showCalendar
                       ? PremiumCalendarWidget(
                           initialDate: _selectedDate,
+                          today: historyState.serverNow,
                           markedDates: historyState.allRecords
                               .map((r) => r.dateTime)
                               .toList(),
                           onDaySelected: (date) {
                             setState(() {
                               _selectedDate = date;
-                              _showCalendar = false;
+                                _showCalendar = false;
                             });
-                            if (DateUtils.isSameDay(date, DateTime.now())) {
+                            final referenceNow = historyState.serverNow ?? DateTime.now();
+                            if (DateUtils.isSameDay(date, referenceNow)) {
                               ref
                                   .read(attendanceHistoryProvider.notifier)
                                   .setFilter(AttendanceTimeFilter.today);
@@ -215,9 +217,10 @@ class _SimplifiedHomeViewState extends ConsumerState<SimplifiedHomeView>
               child: _buildFAB(() {
                 // BUG FIX #3: Mismo problema en el FAB — calcular el tipo correcto
                 // basándose en el último registro de HOY, no en allRecords (que
-                // incluye histórico de otros días y puede dar el tipo incorrecto).
-                final now = DateTime.now();
-                final todayStart = DateTime(now.year, now.month, now.day);
+                // Includes history from other days and may give the wrong type.
+                final referenceNow = historyState.serverNow ?? DateTime.now();
+                final todayStart =
+                    DateTime(referenceNow.year, referenceNow.month, referenceNow.day);
                 final todayRecords = historyState.allRecords
                     .where((r) => !r.dateTime.isBefore(todayStart))
                     .toList()
@@ -325,7 +328,8 @@ class _SimplifiedHomeViewState extends ConsumerState<SimplifiedHomeView>
         (context, index) {
           final date = dayKeys[index];
           final records = grouped[date]!;
-          final isToday = DateUtils.isSameDay(date, DateTime.now());
+          final referenceNow = state.serverNow ?? DateTime.now();
+          final isToday = DateUtils.isSameDay(date, referenceNow);
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,

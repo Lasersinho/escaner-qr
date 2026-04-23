@@ -7,12 +7,14 @@ class PremiumCalendarWidget extends StatefulWidget {
   final DateTime? initialDate;
   final ValueChanged<DateTime> onDaySelected;
   final List<DateTime> markedDates;
+  final DateTime? today;
 
   const PremiumCalendarWidget({
     super.key,
     this.initialDate,
     required this.onDaySelected,
     this.markedDates = const [],
+    this.today,
   });
 
   @override
@@ -22,12 +24,13 @@ class PremiumCalendarWidget extends StatefulWidget {
 class _PremiumCalendarWidgetState extends State<PremiumCalendarWidget> {
   late DateTime _selectedDate;
   late DateTime _currentMonth;
-  final DateTime _today = DateTime.now();
+  late final DateTime _today;
   late PageController _pageController;
 
   @override
   void initState() {
     super.initState();
+    _today = widget.today ?? DateTime.now();
     // Normalizar a media noche
     _selectedDate = widget.initialDate ?? DateTime(_today.year, _today.month, _today.day);
     _currentMonth = DateTime(_selectedDate.year, _selectedDate.month, 1);

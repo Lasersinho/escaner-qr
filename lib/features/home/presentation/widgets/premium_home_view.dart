@@ -50,8 +50,10 @@ class _PremiumHomeViewState extends ConsumerState<PremiumHomeView>
   // ── Attendance type logic (unchanged) ─────────────────────────────────────
 
   int _computeNextType(List<AttendanceRecord> allRecords) {
-    final now = DateTime.now();
-    final todayStart = DateTime(now.year, now.month, now.day);
+    final referenceNow =
+        ref.read(attendanceHistoryProvider).serverNow ?? DateTime.now();
+    final todayStart =
+        DateTime(referenceNow.year, referenceNow.month, referenceNow.day);
     final todayRecords = allRecords
         .where((r) => !r.dateTime.isBefore(todayStart))
         .toList()
@@ -73,8 +75,10 @@ class _PremiumHomeViewState extends ConsumerState<PremiumHomeView>
 
     // Encontrar el registro más reciente del DÍA DE HOY en todos los records,
     // independientemente del filtro activo en la UI.
-    final now = DateTime.now();
-    final todayStart = DateTime(now.year, now.month, now.day);
+    final referenceNow =
+        ref.read(attendanceHistoryProvider).serverNow ?? DateTime.now();
+    final todayStart =
+        DateTime(referenceNow.year, referenceNow.month, referenceNow.day);
 
     final todayRecords = allRecords
         .where((r) => !r.dateTime.isBefore(todayStart))
@@ -162,8 +166,10 @@ class _PremiumHomeViewState extends ConsumerState<PremiumHomeView>
 
   /// Returns the latest entry record from today that doesn't have a matching exit.
   AttendanceRecord? _getActiveEntry(List<AttendanceRecord> allRecords) {
-    final now = DateTime.now();
-    final todayStart = DateTime(now.year, now.month, now.day);
+    final referenceNow =
+        ref.read(attendanceHistoryProvider).serverNow ?? DateTime.now();
+    final todayStart =
+        DateTime(referenceNow.year, referenceNow.month, referenceNow.day);
     final todayRecords = allRecords
         .where((r) => !r.dateTime.isBefore(todayStart))
         .toList()
@@ -237,6 +243,7 @@ class _PremiumHomeViewState extends ConsumerState<PremiumHomeView>
               child: _showCalendar
                   ? PremiumCalendarWidget(
                       initialDate: _selectedDate,
+                      today: historyState.serverNow,
                       markedDates: historyState.allRecords
                           .map((r) => r.dateTime)
                           .toList(),
@@ -245,7 +252,9 @@ class _PremiumHomeViewState extends ConsumerState<PremiumHomeView>
                           _selectedDate = date;
                           _showCalendar = false;
                         });
-                        if (DateUtils.isSameDay(date, DateTime.now())) {
+                        final referenceNow =
+                            historyState.serverNow ?? DateTime.now();
+                        if (DateUtils.isSameDay(date, referenceNow)) {
                           ref
                               .read(attendanceHistoryProvider.notifier)
                               .setFilter(AttendanceTimeFilter.today);
@@ -414,7 +423,9 @@ class _PremiumHomeViewState extends ConsumerState<PremiumHomeView>
             const SizedBox(width: 8),
             _FilterChip(
               label: DateFormat('dd MMM', 'es').format(
-                  historyState.customDateRange?.start ?? DateTime.now()),
+                  historyState.customDateRange?.start ??
+                      historyState.serverNow ??
+                      DateTime.now()),
               isSelected: true,
               onTap: () {
                 setState(() => _showCalendar = true);
