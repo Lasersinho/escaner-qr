@@ -2,6 +2,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:uuid/uuid.dart';
+import 'package:worldtime/worldtime.dart';
 
 import '../../../core/network/dio_client.dart';
 import '../../auth/presentation/auth_provider.dart';
@@ -45,6 +46,7 @@ class AttendanceActionState {
     this.formattedTime,
     this.officeName,
     this.type,
+    this.serverTimestamp,
   });
 
   final AttendanceActionStatus status;
@@ -58,6 +60,9 @@ class AttendanceActionState {
   /// El tipo de marcación (1 = Entrada, 2 = Salida)
   final int? type;
 
+  /// Timestamp real del servidor (hora de Perú), no la hora local del dispositivo.
+  final DateTime? serverTimestamp;
+
   AttendanceActionState copyWith({
     AttendanceActionStatus? status,
     String? message,
@@ -65,6 +70,7 @@ class AttendanceActionState {
     String? formattedTime,
     String? officeName,
     int? type,
+    DateTime? serverTimestamp,
   }) =>
       AttendanceActionState(
         status: status ?? this.status,
@@ -73,6 +79,7 @@ class AttendanceActionState {
         formattedTime: formattedTime ?? this.formattedTime,
         officeName: officeName ?? this.officeName,
         type: type ?? this.type,
+        serverTimestamp: serverTimestamp ?? this.serverTimestamp,
       );
 }
 
@@ -100,8 +107,10 @@ class AttendanceActionNotifier extends StateNotifier<AttendanceActionState> {
   final ProximityService _proximityService;
   final AttendanceRepository _repository;
   final FlutterSecureStorage _secureStorage;
+  final Worldtime _worldtime = Worldtime();
 
   static const _tokenKey = 'attendance_session_token';
+  static const _peruTimeZone = 'America/Lima';
 
   /// Flujo completo al presionar el FAB "+":
   ///
@@ -177,6 +186,7 @@ class AttendanceActionNotifier extends StateNotifier<AttendanceActionState> {
       // ── Paso 5: Ubicación válida → registrar asistencia ──
       state = state.copyWith(message: 'Registrando asistencia en $officeName...');
       print('[DEBUG] processAttendance: Calling repository.markAttendance(type: $type, headquarter: $headquarterId)');
+      final attendanceTimestamp = await _getPeruInternetTime();
 
       // Call the API to mark attendance
       final success = await _repository.markAttendance(
@@ -185,7 +195,7 @@ class AttendanceActionNotifier extends StateNotifier<AttendanceActionState> {
         headquarter: headquarterId,
         latitude: result.latitude,
         longitude: result.longitude,
-        timestamp: DateTime.now(),
+        timestamp: attendanceTimestamp,
       );
       print('[DEBUG] processAttendance: Repository returned success: $success');
 
@@ -195,9 +205,8 @@ class AttendanceActionNotifier extends StateNotifier<AttendanceActionState> {
         await _secureStorage.delete(key: _tokenKey);
       }
 
-      final now = DateTime.now();
-      final hh = now.hour.toString().padLeft(2, '0');
-      final mm = now.minute.toString().padLeft(2, '0');
+      final hh = attendanceTimestamp.hour.toString().padLeft(2, '0');
+      final mm = attendanceTimestamp.minute.toString().padLeft(2, '0');
 
       // ── Paso 7: Éxito ──
       state = state.copyWith(
@@ -205,6 +214,7 @@ class AttendanceActionNotifier extends StateNotifier<AttendanceActionState> {
         formattedTime: '$hh:$mm',
         officeName: officeName,
         type: type,
+        serverTimestamp: attendanceTimestamp,
       );
       print('Process completed successfully');
     } on ProximityException catch (e) {
@@ -230,5 +240,16 @@ class AttendanceActionNotifier extends StateNotifier<AttendanceActionState> {
 
   void reset() {
     state = const AttendanceActionState();
+  }
+
+  Future<DateTime> _getPeruInternetTime() async {
+    try {
+      final peruTime = await _worldtime.timeByCity(_peruTimeZone);
+      print('[DEBUG] processAttendance: Internet time for Peru: $peruTime');
+      return peruTime;
+    } catch (e) {
+      print('[DEBUG] processAttendance: Failed to fetch Peru internet time. Falling back to local time. Error: $e');
+      return DateTime.now();
+    }
   }
 }

@@ -51,8 +51,7 @@ final authRepositoryProvider = Provider<AuthRepository>(
 );
 
 /// Main auth state notifier used throughout the app.
-final authProvider =
-    StateNotifierProvider<AuthNotifier, AuthState>((ref) {
+final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(ref.watch(authRepositoryProvider), ref);
 });
 
@@ -63,10 +62,12 @@ String _getUserFriendlyErrorMessage(Object error) {
   final errorString = error.toString().toLowerCase();
 
   // Network errors
-  if (errorString.contains('tiempo de conexión agotado') || errorString.contains('connection timeout')) {
+  if (errorString.contains('tiempo de conexión agotado') ||
+      errorString.contains('connection timeout')) {
     return 'La conexión está tardando demasiado. Verifica tu conexión a internet.';
   }
-  if (errorString.contains('error de conexión') || errorString.contains('connection error')) {
+  if (errorString.contains('error de conexión') ||
+      errorString.contains('connection error')) {
     return 'No se puede conectar al servidor. Verifica tu conexión a internet.';
   }
   if (errorString.contains('error de red') || errorString.contains('network')) {
@@ -74,28 +75,37 @@ String _getUserFriendlyErrorMessage(Object error) {
   }
 
   // Authentication errors
-  if (errorString.contains('credenciales inválidas') || errorString.contains('401')) {
-    return 'Email o contraseña incorrectos. Verifícalos e intenta nuevamente.';
+  if (errorString.contains('credenciales inválidas') ||
+      errorString.contains('401')) {
+    return 'DNI o contraseña incorrectos. Verifícalos e intenta nuevamente.';
   }
-  if (errorString.contains('acceso denegado') || errorString.contains('dispositivo no autorizado') || errorString.contains('403')) {
+  if (errorString.contains('acceso denegado') ||
+      errorString.contains('dispositivo no autorizado') ||
+      errorString.contains('403')) {
     return 'Este dispositivo no está autorizado. Contacta al administrador.';
   }
 
   // Server errors
-  if (errorString.contains('error interno del servidor') || errorString.contains('500')) {
+  if (errorString.contains('error interno del servidor') ||
+      errorString.contains('500')) {
     return 'Problema temporal del servidor. Inténtalo en unos minutos.';
   }
-  if (errorString.contains('error de validación') || errorString.contains('400')) {
+  if (errorString.contains('error de validación') ||
+      errorString.contains('400')) {
     return 'Los datos enviados no son válidos. Verifica la información.';
   }
 
   // Device binding errors
+  if (errorString.contains('ya se encuentra en otro dispositivo')) {
+    return 'Tu cuenta ya está vinculada a otro dispositivo. Si reinstalaste la app o cambiaste de equipo, contacta al administrador para desvincular la sesión anterior.';
+  }
   if (errorString.contains('dispositivo') || errorString.contains('device')) {
-    return 'Error de identificación del dispositivo. Si reinstalaste la app, contacta soporte.';
+    return 'Error de identificación del dispositivo. Verifica los permisos e intenta nuevamente.';
   }
 
   // Generic errors
-  if (errorString.contains('inesperado') || errorString.contains('unexpected')) {
+  if (errorString.contains('inesperado') ||
+      errorString.contains('unexpected')) {
     return 'Ocurrió un error inesperado. Inténtalo nuevamente.';
   }
 
@@ -125,7 +135,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String email,
     required String password,
   }) async {
-    state = state.copyWith(status: AuthStatus.authenticating, errorMessage: null);
+    state =
+        state.copyWith(status: AuthStatus.authenticating, errorMessage: null);
     try {
       final user = await _repo.login(email: email, password: password);
       state = state.copyWith(status: AuthStatus.authenticated, user: user);
@@ -177,10 +188,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
       // Update stored user info
       await _repo.secureStorage.write(key: _repo.userNameKey, value: name);
-      await _repo.secureStorage.write(key: _repo.userLastnameKey, value: lastname);
+      await _repo.secureStorage
+          .write(key: _repo.userLastnameKey, value: lastname);
       await _repo.secureStorage.write(key: _repo.userEmailKey, value: email);
       await _repo.secureStorage.write(key: _repo.userIdKey, value: id);
-      await _repo.secureStorage.write(key: _repo.userDocumentKey, value: document);
+      await _repo.secureStorage
+          .write(key: _repo.userDocumentKey, value: document);
 
       final updatedUser = User(
         id: id,

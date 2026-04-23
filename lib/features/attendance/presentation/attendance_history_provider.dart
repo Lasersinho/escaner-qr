@@ -7,6 +7,13 @@ import '../../../core/network/dio_client.dart';
 import '../../auth/presentation/auth_provider.dart';
 import '../domain/attendance_record.dart';
 
+// ── Server-time provider ─────────────────────────────────────────────────────
+
+/// Holds the last known server time (Peru/Lima) obtained during a successful
+/// attendance mark.  Used as the authoritative "now" for elapsed-time
+/// calculations and date-grouping so device clock changes don't corrupt the UI.
+final serverNowProvider = StateProvider<DateTime?>((ref) => null);
+
 // ── Time Filter ─────────────────────────────────────────────────────────────
 
 enum AttendanceTimeFilter { today, week, month, custom }
@@ -30,14 +37,33 @@ extension AttendanceTimeFilterLabel on AttendanceTimeFilter {
 
 class AttendanceHistoryState {
   const AttendanceHistoryState({
-    this.filter = AttendanceTimeFilter.week,
+    this.filter = AttendanceTimeFilter.today,
     this.customDateRange,
     this.allRecords = const [],
+    this.serverNow,
   });
 
   final AttendanceTimeFilter filter;
   final DateTimeRange? customDateRange;
   final List<AttendanceRecord> allRecords;
+
+  /// Last known server time (Peru). Set after a successful mark.
+  /// When non-null, used instead of DateTime.now() to define "today".
+  final DateTime? serverNow;
+
+  /// Returns the most recent record from the full history,
+  /// regardless of the active UI filter.
+  AttendanceRecord? get latestRecord {
+    if (allRecords.isEmpty) return null;
+
+    AttendanceRecord latest = allRecords.first;
+    for (final record in allRecords.skip(1)) {
+      if (record.dateTime.isAfter(latest.dateTime)) {
+        latest = record;
+      }
+    }
+    return latest;
+  }
 
   /// Returns records filtered by the current [filter], sorted descending.
   List<AttendanceRecord> get filteredRecords {
@@ -50,15 +76,18 @@ class AttendanceHistoryState {
       }).toList()..sort((a, b) => b.dateTime.compareTo(a.dateTime));
     }
 
-    final now = DateTime.now();
+    // Use serverNow when available so the "today" cutoff is based on the
+    // server's authoritative Peru time, not the device clock.
+    final referenceNow = serverNow ?? DateTime.now();
     final cutoff = switch (filter) {
-      AttendanceTimeFilter.today => DateTime(now.year, now.month, now.day),
+      AttendanceTimeFilter.today =>
+        DateTime(referenceNow.year, referenceNow.month, referenceNow.day),
       AttendanceTimeFilter.week =>
-        now.subtract(const Duration(days: 6)),
+        referenceNow.subtract(const Duration(days: 6)),
       AttendanceTimeFilter.month =>
-        now.subtract(const Duration(days: 29)),
+        referenceNow.subtract(const Duration(days: 29)),
       AttendanceTimeFilter.custom =>
-        now.subtract(const Duration(days: 6)), // Fallback
+        referenceNow.subtract(const Duration(days: 6)), // Fallback
     };
     return allRecords
         .where((r) => r.dateTime.isAfter(cutoff))
@@ -84,11 +113,13 @@ class AttendanceHistoryState {
     AttendanceTimeFilter? filter,
     DateTimeRange? customDateRange,
     List<AttendanceRecord>? allRecords,
+    DateTime? serverNow,
   }) =>
       AttendanceHistoryState(
         filter: filter ?? this.filter,
         customDateRange: customDateRange ?? this.customDateRange,
         allRecords: allRecords ?? this.allRecords,
+        serverNow: serverNow ?? this.serverNow,
       );
 }
 
@@ -158,6 +189,12 @@ class AttendanceHistoryNotifier
 
   void setCustomDateRange(DateTimeRange range) {
     state = state.copyWith(filter: AttendanceTimeFilter.custom, customDateRange: range);
+  }
+
+  /// Updates the authoritative server time stored in the state.
+  /// Call this after every successful attendance mark with the Peru timestamp.
+  void updateServerNow(DateTime serverTime) {
+    state = state.copyWith(serverNow: serverTime);
   }
 
   /// Call after a successful QR scan to add a new entry/exit record.

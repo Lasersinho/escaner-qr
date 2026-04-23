@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-/// Pre-configured [Dio] instance for OfficeFlow API calls.
+/// Pre-configured [Dio] instance for Pulse API calls.
 class DioClient {
   DioClient({required FlutterSecureStorage secureStorage})
       : _secureStorage = secureStorage {

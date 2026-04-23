@@ -33,11 +33,13 @@ class PremiumInput extends StatelessWidget {
         obscureText: obscureText,
         keyboardType: keyboardType,
         textInputAction: textInputAction,
-        style: Theme.of(context).textTheme.bodyLarge,
+        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+          color: context.colors.textPrimary,
+        ),
         decoration: InputDecoration(
           hintText: hint,
           prefixIcon: prefixIcon != null
-              ? Icon(prefixIcon, color: AppColors.textSecondary, size: 20)
+              ? Icon(prefixIcon, color: context.colors.textSecondary, size: 20)
               : null,
         ),
       ),
