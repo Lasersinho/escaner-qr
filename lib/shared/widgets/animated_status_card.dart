@@ -19,6 +19,7 @@ class AnimatedStatusCard extends StatefulWidget {
     required this.nextActionIcon,
     required this.onActionPressed,
     this.isProcessing = false,
+    this.serverNow,
   });
 
   /// First name of the user for the greeting.
@@ -28,6 +29,7 @@ class AnimatedStatusCard extends StatefulWidget {
   final bool isActive;
 
   /// The time the current session started (if active).
+  /// Must come from the server (Peru time), NOT DateTime.now().
   final DateTime? activeSince;
 
   /// Office name where the user clocked in.
@@ -44,6 +46,12 @@ class AnimatedStatusCard extends StatefulWidget {
 
   /// Whether an attendance action is currently being processed.
   final bool isProcessing;
+
+  /// Current server time (Peru). Used instead of DateTime.now() for
+  /// computing elapsed time and the greeting, so device clock changes
+  /// don't corrupt the display. Falls back to activeSince-based delta
+  /// when null.
+  final DateTime? serverNow;
 
   @override
   State<AnimatedStatusCard> createState() => _AnimatedStatusCardState();
@@ -90,7 +98,13 @@ class _AnimatedStatusCardState extends State<AnimatedStatusCard>
   void _updateElapsed() {
     if (!mounted) return;
     setState(() {
-      _elapsed = DateTime.now().difference(widget.activeSince!);
+      // Use serverNow when available so elapsed time is correct even if the
+      // device clock has been changed manually. Fall back to DateTime.now()
+      // only as a last resort (e.g. offline before any successful mark).
+      final referenceNow = widget.serverNow ?? DateTime.now();
+      final diff = referenceNow.difference(widget.activeSince!);
+      // Guard against negative values caused by clock skew.
+      _elapsed = diff.isNegative ? Duration.zero : diff;
     });
   }
 
@@ -102,7 +116,9 @@ class _AnimatedStatusCardState extends State<AnimatedStatusCard>
   }
 
   String _getGreeting() {
-    final hour = DateTime.now().hour;
+    // Use server time (Peru) for the greeting so it doesn't flip when
+    // the user manually changes their device clock.
+    final hour = (widget.serverNow ?? widget.activeSince ?? DateTime.now()).hour;
     if (hour < 12) return 'Buenos días';
     if (hour < 18) return 'Buenas tardes';
     return 'Buenas noches';

@@ -122,6 +122,11 @@ class _PremiumHomeViewState extends ConsumerState<PremiumHomeView>
     final user = ref.read(authProvider).user;
     final timestamp = state.serverTimestamp ?? DateTime.now();
 
+    // ✔ Persist the server time as the authoritative "now" reference.
+    // This prevents DateTime.now() from being used in elapsed-time and
+    // date-grouping calculations when the device clock is out of sync.
+    ref.read(attendanceHistoryProvider.notifier).updateServerNow(timestamp);
+
     // Add to history list immediately using the server timestamp,
     // NOT DateTime.now(), to avoid showing the wrong time when
     // the device clock is out of sync.
@@ -283,6 +288,9 @@ class _PremiumHomeViewState extends ConsumerState<PremiumHomeView>
                             : Icons.logout_rounded,
                         onActionPressed: _markAttendance,
                         isProcessing: _isProcessing,
+                        // Pass the authoritative Peru time so the card never
+                        // calls DateTime.now() for elapsed time or greetings.
+                        serverNow: historyState.serverNow,
                       ),
                     ),
 
@@ -465,7 +473,10 @@ class _PremiumHomeViewState extends ConsumerState<PremiumHomeView>
           final date = dayKeys[index];
           final records = grouped[date]!
             ..sort((a, b) => b.dateTime.compareTo(a.dateTime));
-          final isToday = DateUtils.isSameDay(date, DateTime.now());
+          // Use serverNow for the "today" comparison so a wrong device
+          // clock doesn't tag a past day as "HOY".
+          final referenceNow = state.serverNow ?? DateTime.now();
+          final isToday = DateUtils.isSameDay(date, referenceNow);
 
           return StaggerItem(
             index: index,
