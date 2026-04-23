@@ -665,10 +665,10 @@ class _PremiumHomeViewState extends ConsumerState<PremiumHomeView>
                   const SizedBox(height: 32),
                   SizedBox(
                     width: double.infinity,
-                    height: 52,
                     child: ElevatedButton(
                       onPressed: () => Navigator.pop(context),
                       style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 52),
                         backgroundColor: context.colors.primaryAccent,
                         foregroundColor: Colors.white,
                         elevation: 0,
@@ -678,7 +678,9 @@ class _PremiumHomeViewState extends ConsumerState<PremiumHomeView>
                       ),
                       child: const Text('Genial, gracias',
                           style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
+                              fontSize: 16, 
+                              fontWeight: FontWeight.bold,
+                              height: 1.2)),
                     ),
                   ),
                 ],
@@ -765,10 +767,10 @@ class _PremiumHomeViewState extends ConsumerState<PremiumHomeView>
                   const SizedBox(height: 32),
                   SizedBox(
                     width: double.infinity,
-                    height: 52,
                     child: ElevatedButton(
                       onPressed: () => Navigator.pop(context),
                       style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 52),
                         backgroundColor: context.colors.primaryAccent,
                         foregroundColor: Colors.white,
                         elevation: 0,
@@ -778,7 +780,9 @@ class _PremiumHomeViewState extends ConsumerState<PremiumHomeView>
                       ),
                       child: const Text('Entendido',
                           style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
+                              fontSize: 16, 
+                              fontWeight: FontWeight.bold,
+                              height: 1.2)),
                     ),
                   ),
                 ],
