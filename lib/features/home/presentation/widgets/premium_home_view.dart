@@ -668,7 +668,7 @@ class _PremiumHomeViewState extends ConsumerState<PremiumHomeView>
                     child: ElevatedButton(
                       onPressed: () => Navigator.pop(context),
                       style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 52),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                         backgroundColor: context.colors.primaryAccent,
                         foregroundColor: Colors.white,
                         elevation: 0,
@@ -676,11 +676,14 @@ class _PremiumHomeViewState extends ConsumerState<PremiumHomeView>
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text('Genial, gracias',
-                          style: TextStyle(
-                              fontSize: 16, 
-                              fontWeight: FontWeight.bold,
-                              height: 1.2)),
+                      child: const Padding(
+                        padding: EdgeInsets.only(bottom: 4.0),
+                        child: Text('Genial, gracias',
+                            style: TextStyle(
+                                fontSize: 16, 
+                                fontWeight: FontWeight.bold,
+                                height: 1.3)),
+                      ),
                     ),
                   ),
                 ],
@@ -770,7 +773,7 @@ class _PremiumHomeViewState extends ConsumerState<PremiumHomeView>
                     child: ElevatedButton(
                       onPressed: () => Navigator.pop(context),
                       style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 52),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                         backgroundColor: context.colors.primaryAccent,
                         foregroundColor: Colors.white,
                         elevation: 0,
@@ -778,11 +781,14 @@ class _PremiumHomeViewState extends ConsumerState<PremiumHomeView>
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text('Entendido',
-                          style: TextStyle(
-                              fontSize: 16, 
-                              fontWeight: FontWeight.bold,
-                              height: 1.2)),
+                      child: const Padding(
+                        padding: EdgeInsets.only(bottom: 4.0),
+                        child: Text('Entendido',
+                            style: TextStyle(
+                                fontSize: 16, 
+                                fontWeight: FontWeight.bold,
+                                height: 1.3)),
+                      ),
                     ),
                   ),
                 ],
