@@ -557,10 +557,10 @@ class _SimplifiedHomeViewState extends ConsumerState<SimplifiedHomeView>
                   const SizedBox(height: 32),
                   SizedBox(
                     width: double.infinity,
-                    height: 52,
                     child: ElevatedButton(
                       onPressed: () => Navigator.pop(context),
                       style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                         backgroundColor: context.colors.primaryAccent,
                         foregroundColor: Colors.white,
                         elevation: 0,
@@ -568,9 +568,14 @@ class _SimplifiedHomeViewState extends ConsumerState<SimplifiedHomeView>
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text('Genial, gracias',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
+                      child: const Padding(
+                        padding: EdgeInsets.only(bottom: 4.0),
+                        child: Text('Genial, gracias',
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                height: 1.3)),
+                      ),
                     ),
                   ),
                 ],
@@ -648,10 +653,10 @@ class _SimplifiedHomeViewState extends ConsumerState<SimplifiedHomeView>
                   const SizedBox(height: 32),
                   SizedBox(
                     width: double.infinity,
-                    height: 52,
                     child: ElevatedButton(
                       onPressed: () => Navigator.pop(context),
                       style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                         backgroundColor: context.colors.primaryAccent,
                         foregroundColor: Colors.white,
                         elevation: 0,
@@ -659,9 +664,14 @@ class _SimplifiedHomeViewState extends ConsumerState<SimplifiedHomeView>
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text('Entendido',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
+                      child: const Padding(
+                        padding: EdgeInsets.only(bottom: 4.0),
+                        child: Text('Entendido',
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                height: 1.3)),
+                      ),
                     ),
                   ),
                 ],
